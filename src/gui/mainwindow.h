@@ -3,12 +3,23 @@
 
 #include <QtGui>
 
-class MainWindow : public QMainWindow {
+#include "mainwizard.h"
+
+class MainWindow : public QMainWindow
+{
     Q_OBJECT
     
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+private slots:
+    void openWizard();
+
+private:
+    void createMenu();
+
+    MainWizard *mainWizard;
 };
 
 #endif // MAINWINDOW_H
