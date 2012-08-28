@@ -9,6 +9,14 @@ QT       += core gui
 TARGET = TrajSys
 TEMPLATE = app
 
+# MAC opencv dir
+#INCLUDEPATH += /usr/local/include
+#LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_video
+
+# Windows opencv dir
+INCLUDEPATH += F:/Software/opencv/mingw/install/include
+LIBS += -LF:/Software/opencv/mingw/install/lib
+LIBS += -lopencv_core242 -lopencv_highgui242 -lopencv_imgproc242 -lopencv_video242
 
 SOURCES += gui/main.cpp\
     gui/mainwindow.cpp \
@@ -23,9 +31,17 @@ SOURCES += gui/main.cpp\
     utils/klt/error.c \
     utils/klt/convolve.c \
     gui/mainwizard.cpp \
-    gui/modepage.cpp \
-    gui/offlinefilelistpage.cpp \
-    gui/offlinetrackerpage.cpp
+    kernel/taskmanager.cpp \
+    utils/utils.cpp \
+    gui/sourcespage.cpp \
+    gui/trackerspage.cpp \
+    gui/appspage.cpp \
+    gui/modespage.cpp \
+    kernel/trackermanager.cpp \
+    kernel/appmanager.cpp \
+    kernel/klttracker.cpp \
+    kernel/kernelutils.cpp \
+    kernel/coherentfilter.cpp
 
 HEADERS  += gui/mainwindow.h \
     utils/klt/pyramid.h \
@@ -37,11 +53,15 @@ HEADERS  += gui/mainwindow.h \
     utils/klt/base.h \
     gui/guiutils.h \
     gui/mainwizard.h \
-    gui/modepage.h \
-    gui/offlinefilelistpage.h \
-    gui/offlinetrackerpage.h \
-    utils/const.h
-
-OTHER_FILES +=
-
-RESOURCES +=
+    utils/const.h \
+    kernel/taskmanager.h \
+    utils/utils.h \
+    gui/sourcespage.h \
+    gui/trackerspage.h \
+    gui/appspage.h \
+    gui/modespage.h \
+    kernel/trackermanager.h \
+    kernel/appmanager.h \
+    kernel/kernelutils.h \
+    kernel/klttracker.h \
+    kernel/coherentfilter.h
