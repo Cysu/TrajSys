@@ -41,7 +41,11 @@ SOURCES += gui/main.cpp\
     kernel/appmanager.cpp \
     kernel/klttracker.cpp \
     kernel/kernelutils.cpp \
-    kernel/coherentfilter.cpp
+    kernel/coherentfilter.cpp \
+    kernel/trackio.cpp \
+    gui/trackdisplayer.cpp \
+    gui/clusterdisplayer.cpp \
+    kernel/clusterio.cpp
 
 HEADERS  += gui/mainwindow.h \
     utils/klt/pyramid.h \
@@ -64,4 +68,8 @@ HEADERS  += gui/mainwindow.h \
     kernel/appmanager.h \
     kernel/kernelutils.h \
     kernel/klttracker.h \
-    kernel/coherentfilter.h
+    kernel/coherentfilter.h \
+    kernel/trackio.h \
+    gui/trackdisplayer.h \
+    gui/clusterdisplayer.h \
+    kernel/clusterio.h

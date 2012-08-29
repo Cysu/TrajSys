@@ -1,6 +1,7 @@
 #include "taskmanager.h"
 #include "trackermanager.h"
 #include "appmanager.h"
+#include "kernelutils.h"
 
 TaskManager::TaskManager(const QVector<Task> &tasks, QObject *parent) :
     QObject(parent),
@@ -13,21 +14,31 @@ void TaskManager::handleTasks()
     for (int i = 0; i < tasks.size(); i ++) {
         Task &task = tasks[i];
 
+        if (task.mode == "Offline") {
 
-        QFileInfo src(task.sources);
-        if (src.isDir()) {
-            QFileInfoList files;
-            getImageFiles(task.sources, files);
+            QFileInfo src(task.sources);
+            if (src.isDir()) {
+                QFileInfoList files;
+                getImageFiles(task.sources, files);
 
-            TrackerManager trackerManager(
-                        files, task.trackerType, task.trackerParams,
-                        "D:/CST/MyProgram/TrajSys/output/"+src.fileName());
-            trackerManager.work();
+                TrackSet trackSet;
 
-            AppManager appManager(
-                        files, task.appType, task.appParams,
-                        "D:/CST/MyProgram/TrajSys/output/"+src.fileName());
-            appManager.work();
+                TrackerManager trackerManager(
+                            &files,
+                            task.trackerType, task.trackerParams,
+                            &trackSet,
+                            "D:/CST/MyProgram/TrajSys/output/"+src.fileName());
+                trackerManager.work();
+
+                AppManager appManager(
+                            &files, &trackSet,
+                            task.appType, task.appParams,
+                            "D:/CST/MyProgram/TrajSys/output/"+src.fileName());
+                appManager.work();
+            } else {
+
+            }
+
         } else {
 
         }

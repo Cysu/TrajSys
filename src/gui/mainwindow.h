@@ -16,6 +16,9 @@ public:
 private slots:
     void openWizard();
 
+    void displayTrack();
+    void displayCluster();
+
 private:
     void createMenu();
 

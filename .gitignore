@@ -14,3 +14,5 @@
 # Qt project files
 *.user
 release/
+test/
+output/

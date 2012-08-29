@@ -5,23 +5,26 @@
 #include <QString>
 #include <QStringList>
 #include <QFileInfoList>
-#include <QVector>
+
+#include "kernelutils.h"
 
 class TrackerManager : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit TrackerManager(const QFileInfoList &files,
+    explicit TrackerManager(QFileInfoList *files,
                             const QString &type, const QString &params,
+                            TrackSet *trackSet,
                             const QString &outputFileName,
                             QObject *parent = 0);
 
     void work();
     
 private:
+    QFileInfoList *files;
     QString type, params;
-    QFileInfoList files;
+    TrackSet *trackSet;
     QString outputFileName;
 };
 

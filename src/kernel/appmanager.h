@@ -7,20 +7,23 @@
 #include <QFileInfoList>
 #include <QVector>
 
+#include "kernelutils.h"
+
 class AppManager : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit AppManager(const QFileInfoList &files,
+    explicit AppManager(QFileInfoList *files, TrackSet *trackSet,
                         const QString &type, const QString &params,
                         const QString &outputFileName,
                         QObject *parent = 0);
     void work();
 
 private:
+    QFileInfoList *files;
+    TrackSet *trackSet;
     QString type, params;
-    QFileInfoList files;
     QString outputFileName;
 };
 

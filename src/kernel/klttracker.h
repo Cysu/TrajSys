@@ -13,17 +13,19 @@ class KltTracker : public QObject
     Q_OBJECT
 
 public:
-    explicit KltTracker(const QFileInfoList &files,
+    explicit KltTracker(QFileInfoList *files,
                         const QString &params,
-                        const QString &outputFileName,
+                        TrackSet *trackSet,
+                        const QString &outputFilePath,
                         QObject *parent = 0);
 
     void run();
     
 private:
-    QFileInfoList files;
+    QFileInfoList *files;
     QString params;
-    QString outputFileName;
+    TrackSet *trackSet;
+    QString outputFilePath;
 
     void parseParams(int &nrFeatures, int &fgThres);
     void addTrackPoint(Track *tracks, int idx, int t, int x, int y);

@@ -1,15 +1,18 @@
 #include "klttracker.h"
+#include "trackio.h"
 #include "utils/klt/klt.h"
 #include <opencv2/opencv.hpp>
 
-KltTracker::KltTracker(const QFileInfoList &files,
+KltTracker::KltTracker(QFileInfoList *files,
                        const QString &params,
-                       const QString &outputFileName,
+                       TrackSet *trackSet,
+                       const QString &outputFilePath,
                        QObject *parent) :
     QObject(parent),
     files(files),
     params(params),
-    outputFileName(outputFileName)
+    trackSet(trackSet),
+    outputFilePath(outputFilePath)
 {
 }
 
@@ -26,15 +29,18 @@ void KltTracker::run()
     memset(isForeground, false, nrFeatures*sizeof(bool));
 
     cv::Mat bgFrame, prevFrame, cntFrame;
-    int startFrame = 0, endFrame = 10;
+    int startFrame = 0, endFrame = files->size()-1;
     if (fgThres > 0) startFrame = 1;
-    bgFrame = cv::imread(files.at(0).filePath().toStdString(), 0);
-    prevFrame = cv::imread(files.at(startFrame).filePath().toStdString(), 0);
+    bgFrame = cv::imread(files->at(0).filePath().toStdString(), 0);
+    prevFrame = cv::imread(files->at(startFrame).filePath().toStdString(), 0);
     int nrCols = prevFrame.cols, nrRows = prevFrame.rows;
 
 
     // Initialize the output.
-    FILE *fid = fopen(outputFileName.toStdString().c_str(), "w");
+    TrackIO trackIO;
+    trackIO.setOutput(outputFilePath);
+
+    trackIO.writePath(files->at(0).absolutePath());
 
     // Initialize KLT tracker.
     KLT_TrackingContext tc = KLTCreateTrackingContext();
@@ -59,7 +65,7 @@ void KltTracker::run()
     for (int i = startFrame+1; i <= endFrame; i ++) {
         // Tracking features on each frame.
         // Replace the lost features.
-        cntFrame = cv::imread(files.at(i).filePath().toStdString(), 0);
+        cntFrame = cv::imread(files->at(i).filePath().toStdString(), 0);
         KLTTrackFeatures(tc, prevFrame.data, cntFrame.data, nrCols, nrRows, fl);
         KLTReplaceLostFeatures(tc, cntFrame.data, nrCols, nrRows, fl);
 
@@ -80,7 +86,10 @@ void KltTracker::run()
             } else if (fl->feature[k]->val > 0) {
                 // The feature is newly selected.
                 // Output the lost track if it's foreground track.
-                if (isForeground[k]) printTrack(fid, tracks[k]);
+                if (isForeground[k]) {
+                    trackSet->push_back(tracks[k]);
+                    trackIO.writeTrack(tracks[k]);
+                }
 
                 // Add the new track.
                 if (abs(v - bgV) < fgThres) isForeground[k] = false;
@@ -95,9 +104,12 @@ void KltTracker::run()
     }
 
     for (int k = 0; k < nrFeatures; k ++)
-        if (isForeground[k]) printTrack(fid, tracks[k]);
+        if (isForeground[k]) {
+            trackSet->push_back(tracks[k]);
+            trackIO.writeTrack(tracks[k]);
+        }
 
-    fclose(fid);
+    trackIO.closeOutput();
 
     delete[] isForeground;
     delete[] tracks;
