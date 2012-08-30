@@ -1,25 +1,25 @@
 #include "appmanager.h"
-#include "coherentfilter.h"
 
-AppManager::AppManager(QFileInfoList *files, TrackSet *trackSet,
-                       const QString &type, const QString &params,
-                       const QString &outputFileName, QObject *parent) :
+AppManager::AppManager(const QString &type, const QString &params,
+                       QObject *parent) :
     QObject(parent),
-    files(files),
-    trackSet(trackSet),
-    type(type),
-    params(params),
-    outputFileName(outputFileName)
-{
-}
-
-void AppManager::work()
+    type(type)
 {
     if (type == "Coherent Filter") {
-        CoherentFilter *coherentFilter = new CoherentFilter(
-                    files, trackSet, params,
-                    outputFileName+"("+params+").cls");
-        coherentFilter->run();
+        coherentFilter = new CoherentFilter(params);
     }
+}
 
+void AppManager::displayResult(const QString &windowName, const TrackSet &trackSet, cv::Mat &img)
+{
+    if (type == "Coherent Filter") {
+        coherentFilter->displayResult(windowName, trackSet, img);
+    }
+}
+
+void AppManager::saveResult(const TrackSet &trackSet, const QString &ifName, const QString &ofName)
+{
+    if (type == "Coherent Filter") {
+        coherentFilter->saveResult(trackSet, ifName, ofName+".cls");
+    }
 }

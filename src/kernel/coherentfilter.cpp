@@ -10,35 +10,23 @@
 #define VOTE(r, l) vote[(r)*nrFeature + (l)]
 #define CONN(i, j) conn[(i)*nrFeature + (j)]
 
-CoherentFilter::CoherentFilter(QFileInfoList *files, TrackSet *trackSet,
-                               const QString &params,
-                               const QString &outputFilePath,
+CoherentFilter::CoherentFilter(const QString &params,
                                QObject *parent) :
-    QObject(parent),
-    files(files),
-    trackSet(trackSet),
-    params(params),
-    outputFilePath(outputFilePath),
-    nrTrack(NULL),
-    trackLists(NULL),
-    knn(NULL),
-    label(NULL)
+    QObject(parent)
 {
+    parseParams(params);
 }
 
-void CoherentFilter::run()
+void CoherentFilter::saveResult(const TrackSet &trackSet,
+                                const QString &ifName, const QString &ofName)
 {
     // Initialize the output.
     ClusterIO clusterIO;
-    clusterIO.setOutput(outputFilePath);
-    clusterIO.writePath(files->at(0).absolutePath());
+    clusterIO.setOutput(ofName);
+    clusterIO.writePath(ifName);
 
-
-    // Pre-initialize some important variables.
-    parseParams();
-    computeTrackLists();
-    computeKNN();
-
+    computeTrackLists(trackSet);
+    computeKNN(trackSet);
 
     label = new int[nrFrame * nrFeature];
     memset(label, -1, nrFrame*nrFeature*sizeof(int));
@@ -79,10 +67,10 @@ void CoherentFilter::run()
                 // Compute the velocity coherence.
                 double g = 0;
                 for (int dt = 0; dt < period; dt ++) {
-                    TrackPoint u1 = getTrackPoint(TRACKLISTS(t+dt, i), time+dt);
-                    TrackPoint v1 = getTrackPoint(TRACKLISTS(t+dt, j), time+dt);
-                    TrackPoint u2 = getTrackPoint(TRACKLISTS(t+dt+1, i), time+dt+1);
-                    TrackPoint v2 = getTrackPoint(TRACKLISTS(t+dt+1, j), time+dt+1);
+                    TrackPoint u1 = getTrackPoint(trackSet, TRACKLISTS(t+dt, i), time+dt);
+                    TrackPoint v1 = getTrackPoint(trackSet, TRACKLISTS(t+dt, j), time+dt);
+                    TrackPoint u2 = getTrackPoint(trackSet, TRACKLISTS(t+dt+1, i), time+dt+1);
+                    TrackPoint v2 = getTrackPoint(trackSet, TRACKLISTS(t+dt+1, j), time+dt+1);
                     int ux = u2.x-u1.x, uy = u2.y-u1.y;
                     int vx = v2.x-v1.x, vy = v2.y-v1.y;
                     int u = SQR(ux)+SQR(uy);
@@ -175,7 +163,7 @@ void CoherentFilter::run()
         for (int i = 0; i < nrTrack[t]; i ++) {
             if (TRACKLISTS(t, i) == -1) continue;
             if (LABEL(t, i) == -1) continue;
-            TrackPoint trackPoint = getTrackPoint(TRACKLISTS(t, i), time);
+            TrackPoint trackPoint = getTrackPoint(trackSet, TRACKLISTS(t, i), time);
             ClusterPoint clusterPoint = {
                 LABEL(t, i),
                 trackPoint.x,
@@ -194,7 +182,7 @@ void CoherentFilter::run()
     delete[] conn;
 }
 
-void CoherentFilter::parseParams()
+void CoherentFilter::parseParams(const QString &params)
 {
     QStringList paramList = params.split(",");
     period = paramList.at(0).toInt();
@@ -202,12 +190,17 @@ void CoherentFilter::parseParams()
     vThres = paramList.at(2).toDouble();
 }
 
-void CoherentFilter::computeTrackLists()
+void CoherentFilter::displayResult(const QString &windowName, const TrackSet &trackSet, cv::Mat &img)
+{
+
+}
+
+void CoherentFilter::computeTrackLists(const TrackSet &trackSet)
 {
     startFrame = 0x7fffffff;
     endFrame = 0;
-    for (int i = 0; i < trackSet->size(); i ++) {
-        const Track &track = trackSet->at(i);
+    for (int i = 0; i < trackSet.size(); i ++) {
+        const Track &track = trackSet[i];
         startFrame = std::min(startFrame, track[0].t);
         endFrame = std::max(endFrame, track.back().t);
     }
@@ -215,8 +208,8 @@ void CoherentFilter::computeTrackLists()
 
     int *count = new int[nrFrame];
     memset(count, 0, nrFrame*sizeof(int));
-    for (int i = 0; i < trackSet->size(); i ++) {
-        const Track &track = trackSet->at(i);
+    for (int i = 0; i < trackSet.size(); i ++) {
+        const Track &track = trackSet[i];
         for (int t = track[0].t; t <= track.back().t; t ++)
             count[t-startFrame] ++;
     }
@@ -230,16 +223,16 @@ void CoherentFilter::computeTrackLists()
 
     nrTrack = new int[nrFrame];
     trackLists = new int[nrFrame * nrFeature];
-    int *trackIdx = new int[trackSet->size()];
+    int *trackIdx = new int[trackSet.size()];
     memset(nrTrack, 0, nrFrame*sizeof(int));
     memset(trackLists, -1, nrFrame*nrFeature*sizeof(int));
-    memset(trackIdx, -1,trackSet->size()*sizeof(int));
+    memset(trackIdx, -1,trackSet.size()*sizeof(int));
 
     for (int t = 0; t < nrFrame; t ++) {
         int time = startFrame+t;
         int idx = 0;
-        for (int i = 0; i < trackSet->size(); i ++) {
-            const Track &track = trackSet->at(i);
+        for (int i = 0; i < trackSet.size(); i ++) {
+            const Track &track = trackSet[i];
             if (track.back().t-track[0].t < period) continue;
             if (track[0].t <= time && track.back().t >= time) {
                 if (trackIdx[i] == -1) {
@@ -262,7 +255,7 @@ void CoherentFilter::computeTrackLists()
     delete[] trackIdx;
 }
 
-void CoherentFilter::computeKNN()
+void CoherentFilter::computeKNN(const TrackSet &trackSet)
 {
     knn = new int[nrFrame * nrFeature * nrNeighbor];
     int *dist = new int[nrFeature];
@@ -272,12 +265,12 @@ void CoherentFilter::computeKNN()
         int time = startFrame+t;
         for (int i = 0; i < nrTrack[t]; i ++) {
             if (TRACKLISTS(t, i) == -1) continue;
-            TrackPoint u = getTrackPoint(TRACKLISTS(t, i), time);
+            TrackPoint u = getTrackPoint(trackSet, TRACKLISTS(t, i), time);
             for (int j = 0; j < nrTrack[t]; j ++) {
                 idx[j] = j;
                 dist[j] = 0x7fffffff;
                 if (TRACKLISTS(t, j) == -1 || i == j) continue;
-                TrackPoint v = getTrackPoint(TRACKLISTS(t, j), time);
+                TrackPoint v = getTrackPoint(trackSet, TRACKLISTS(t, j), time);
                 dist[j] = SQR(u.x-v.x) + SQR(u.y-v.y);
             }
             KNNSort(dist, idx, 0, nrTrack[t]-1);
@@ -307,9 +300,10 @@ void CoherentFilter::KNNSort(int *dist, int *idx, int l, int r)
     if (i < r) KNNSort(dist, idx, i, r);
 }
 
-TrackPoint CoherentFilter::getTrackPoint(int trackIdx, int time)
+TrackPoint CoherentFilter::getTrackPoint(const TrackSet &trackSet,
+                                         int trackIdx, int time)
 {
-    const Track &track = trackSet->at(trackIdx);
+    const Track &track = trackSet[trackIdx];
     int i = time - track[0].t;
     return track[i];
 }

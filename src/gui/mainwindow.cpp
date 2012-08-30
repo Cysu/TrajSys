@@ -47,8 +47,13 @@ void MainWindow::displayTrack()
                 tr("Track (*.trk)"));
     if (path.isEmpty()) return;
 
-    TrackDisplayer trackDisplayer(path);
-    trackDisplayer.display();
+    QString windowName = "Track Displayer";
+    cv::namedWindow(windowName.toStdString());
+
+    TrackDisplayer trackDisplayer;
+    trackDisplayer.display(windowName, path);
+
+    cv::destroyWindow(windowName.toStdString());
 }
 
 void MainWindow::displayCluster()

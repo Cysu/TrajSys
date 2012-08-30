@@ -64,15 +64,66 @@ void SourcesPage::initializePage()
         delete layout();
         setLayout(offlineSourcesPageLayout);
     } else if (mode == QString("Online")) {
+        setTitle(tr("Online Sources"));
+        setSubTitle(tr("Specify the videos and folders to be processed offline."));
 
+        selectFolderRadioButton = new QRadioButton(tr("&Folder"));
+        selectVideoRadioButton = new QRadioButton(tr("&Video"));
+        selectCameraRadioButton = new QRadioButton(tr("&Camera"));
+        selectSourceGroupBox = new QGroupBox;
+        selectCameraRadioButton->setChecked(true);
+
+        selectFolderLineEdit = new QLineEdit;
+        selectVideoLineEdit = new QLineEdit;
+
+        QIcon selectFolderIcon(QPixmap("../res/offline_filelist_addfolder.png"));
+        QIcon selectVideoIcon(QPixmap("../res/offline_filelist_addvideo.png"));
+
+        selectFolderPushButton = new QPushButton;
+        selectVideoPushButton = new QPushButton;
+        selectFolderPushButton->setIcon(selectFolderIcon);
+        selectVideoPushButton->setIcon(selectVideoIcon);
+
+        connect(selectFolderPushButton, SIGNAL(clicked()), this, SLOT(selectFolder()));
+        connect(selectVideoPushButton, SIGNAL(clicked()), this, SLOT(selectVideo()));
+
+        QGridLayout *selectSourceGroupBoxLayout = new QGridLayout;
+        selectSourceGroupBoxLayout->addWidget(selectFolderRadioButton, 0, 0);
+        selectSourceGroupBoxLayout->addWidget(selectVideoRadioButton, 1, 0);
+        selectSourceGroupBoxLayout->addWidget(selectCameraRadioButton, 2, 0);
+        selectSourceGroupBoxLayout->addWidget(selectFolderLineEdit, 0, 1);
+        selectSourceGroupBoxLayout->addWidget(selectVideoLineEdit, 1, 1);
+        selectSourceGroupBoxLayout->addWidget(selectFolderPushButton, 0, 2);
+        selectSourceGroupBoxLayout->addWidget(selectVideoPushButton, 1, 2);
+        selectSourceGroupBox->setLayout(selectSourceGroupBoxLayout);
+
+        QGridLayout *onlineSourcePageLayout = new QGridLayout;
+        onlineSourcePageLayout->addWidget(selectSourceGroupBox, 0, 0);
+
+        delete layout();
+        setLayout(onlineSourcePageLayout);
     }
 
 }
 
 void SourcesPage::getSources(QStringList &sources)
 {
-    for (int i = 0; i < sourcesListWidget->count(); i ++)
-        sources.push_back(sourcesListWidget->item(i)->text());
+    MainWizard *mainWizard = (MainWizard *)wizard();
+
+    QString mode;
+    mainWizard->getMode(mode);
+
+    if (mode == "Offline") {
+        for (int i = 0; i < sourcesListWidget->count(); i ++)
+            sources.push_back(sourcesListWidget->item(i)->text());
+    } else if (mode == "Online") {
+        if (selectFolderRadioButton->isChecked() && selectFolderLineEdit->text() != "")
+            sources.push_back(selectFolderLineEdit->text());
+        else if (selectVideoRadioButton->isChecked() && selectVideoLineEdit->text() != "")
+            sources.push_back(selectVideoLineEdit->text());
+        else if (selectCameraRadioButton->isChecked())
+            sources.push_back("Camera");
+    }
 }
 
 void SourcesPage::addFolder()
@@ -91,7 +142,6 @@ void SourcesPage::addVideo()
                 tr("Videos (*.avi *.wmv)"));
     if (path.isEmpty()) return;
     sourcesListWidget->addItem(path);
-
 }
 
 void SourcesPage::delItems()
@@ -104,4 +154,22 @@ void SourcesPage::delItems()
 void SourcesPage::delAll()
 {
     sourcesListWidget->clear();
+}
+
+void SourcesPage::selectFolder()
+{
+    QString path = QFileDialog::getExistingDirectory(
+                this, tr("Open Directory"), QDir::currentPath(),
+                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (path.isEmpty()) return;
+    selectFolderLineEdit->setText(path);
+}
+
+void SourcesPage::selectVideo()
+{
+    QString path = QFileDialog::getOpenFileName(
+                this, tr("Open Video"), QDir::currentPath(),
+                tr("Videos (*.avi *.wmv)"));
+    if (path.isEmpty()) return;
+    selectVideoLineEdit->setText(path);
 }

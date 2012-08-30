@@ -2,23 +2,21 @@
 #include "kernel/trackio.h"
 #include "gui/guiutils.h"
 
-TrackDisplayer::TrackDisplayer(const QString &filePath,
-                               QObject *parent) :
-    QObject(parent),
-    filePath(filePath)
+TrackDisplayer::TrackDisplayer(QObject *parent) :
+    QObject(parent)
 {
 }
 
-void TrackDisplayer::display()
+void TrackDisplayer::display(const QString &window, const QString &trkFile)
 {
     TrackIO trackIO;
-    trackIO.setInput(filePath);
+    trackIO.setInput(trkFile);
 
-    QString folderPath;
-    if (!trackIO.readPath(folderPath)) return;
+    QString folder;
+    if (!trackIO.readPath(folder)) return;
 
     QFileInfoList files;
-    getImageFiles(folderPath, files);
+    getImageFiles(folder, files);
 
     TrackSet trackSet;
     while (true) {
@@ -29,14 +27,18 @@ void TrackDisplayer::display()
 
     trackIO.closeInput();
 
-    cv::namedWindow("Track Displayer");
     for (int i = 0; i < files.size(); i ++) {
         cv::Mat img = cv::imread(files.at(i).filePath().toStdString());
         drawTrack(img, trackSet, i);
-        cv::imshow("Track Displayer", img);
+        cv::imshow(window.toStdString(), img);
         if (cv::waitKey(100) >= 0) break;
     }
-    cv::destroyWindow("Track Displayer");
+}
+
+void TrackDisplayer::display(const QString &window, const TrackSet &trackSet, cv::Mat &img)
+{
+    drawTrack(img, trackSet);
+    cv::imshow(window.toStdString(), img);
 }
 
 void TrackDisplayer::drawTrack(cv::Mat &img, const TrackSet &trackSet, int time)
@@ -44,17 +46,22 @@ void TrackDisplayer::drawTrack(cv::Mat &img, const TrackSet &trackSet, int time)
     for (int i = 0; i < trackSet.size(); i ++) {
         const Track &track = trackSet[i];
         if (track.size() < 5) continue;
-        if (track[0].t > time || track.back().t < time) continue;
 
-        int j = time-track[0].t;
-        if (track[j].t != time) continue;
+        int j;
+        if (time != -1) {
+            if (track[0].t > time || track.back().t < time) continue;
+            j = time-track[0].t;
+            if (track[j].t != time) continue;
+        } else {
+            j = track.size()-1;
+        }
 
-        int s = std::max(0, j-20);
+        int s = std::max(0, j-5);
         cv::Point p(track[s].x, track[s].y), q;
 
         for (int k = s+1; k <= j; k ++) {
             q = cv::Point(track[k].x, track[k].y);
-            cv::line(img, p, q, EXAMPLE_COLOR[i%6], 3);
+            cv::line(img, p, q, EXAMPLE_COLOR[i%6], 1);
             p = q;
         }
     }

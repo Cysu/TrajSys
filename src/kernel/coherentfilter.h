@@ -6,6 +6,8 @@
 #include <QString>
 #include <QStringList>
 
+#include <opencv2/opencv.hpp>
+
 #include "kernelutils.h"
 
 class CoherentFilter : public QObject
@@ -13,19 +15,14 @@ class CoherentFilter : public QObject
     Q_OBJECT
 
 public:
-    explicit CoherentFilter(QFileInfoList *files, TrackSet *trackSet,
-                            const QString &params,
-                            const QString &outputFilePath,
+    explicit CoherentFilter(const QString &params,
                             QObject *parent = 0);
 
-    void run();
+    void displayResult(const QString &windowName, const TrackSet &trackSet, cv::Mat &img);
+    void saveResult(const TrackSet &trackSet, const QString &ifName, const QString &ofName);
     
 private:
-    QFileInfoList *files;
-    TrackSet *trackSet;
-    QString params;
-    QString outputFilePath;
-
+    // Parameters.
     int period, nrNeighbor;
     double vThres;
 
@@ -37,16 +34,13 @@ private:
     int *knn;
     int *label;
 
-    void parseParams();
-
-    void computeTrackLists();
-    void computeKNN();
+    void parseParams(const QString &params);
+    void computeTrackLists(const TrackSet &trackSet);
+    void computeKNN(const TrackSet &trackSet);
     void KNNSort(int *dist, int *idx, int l, int r);
-    TrackPoint getTrackPoint(int idx, int t);
-
+    TrackPoint getTrackPoint(const TrackSet &trackSet, int idx, int t);
     void unionJoin(int *father, int i, int j);
-    int unionGetRoot(int *father, int i);
-    
+    int unionGetRoot(int *father, int i);    
 };
 
 #endif // COHERENTFILTER_H

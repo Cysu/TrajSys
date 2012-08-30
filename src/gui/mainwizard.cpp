@@ -44,8 +44,8 @@ void MainWizard::accept()
         tasks.push_back(task);
     }
 
-    TaskManager *taskManager = new TaskManager(tasks);
-    taskManager->handleTasks();
+    TaskManager taskManager(tasks);
+    taskManager.handleTasks();
 
     QDialog::accept();
 }

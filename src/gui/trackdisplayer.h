@@ -15,16 +15,14 @@ class TrackDisplayer : public QObject
     Q_OBJECT
 
 public:
-    explicit TrackDisplayer(const QString &filePath, QObject *parent = 0);
+    explicit TrackDisplayer(QObject *parent = 0);
 
-    void display();
+    void display(const QString &window, const QString &trkFile);
+    void display(const QString &window, const TrackSet &trackSet, cv::Mat &img);
     
 private:
-    QString filePath;
-
     void getImageFiles(const QString &folder, QFileInfoList &files);
-
-    void drawTrack(cv::Mat &img, const TrackSet &trackSet, int time);
+    void drawTrack(cv::Mat &img, const TrackSet &trackSet, int time = -1);
     
 };
 

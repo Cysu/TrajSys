@@ -1,28 +1,37 @@
 #include "trackermanager.h"
-#include "klttracker.h"
 
-TrackerManager::TrackerManager(QFileInfoList *files,
-                               const QString &type, const QString &params,
-                               TrackSet *trackSet,
-                               const QString &outputFileName,
+TrackerManager::TrackerManager(const QString &type, const QString &params,
                                QObject *parent) :
     QObject(parent),
-    files(files),
-    type(type),
-    params(params),
-    trackSet(trackSet),
-    outputFileName(outputFileName)
-{
-
-}
-
-void TrackerManager::work()
+    type(type)
 {
     if (type == "KLT") {
-        KltTracker *kltTracker = new KltTracker(
-                    files, params,
-                    trackSet,
-                    outputFileName+"("+params+").trk");
-        kltTracker->run();
+        kltTracker = new KltTracker(params);
+    }
+}
+
+void TrackerManager::getFromFiles(const QFileInfoList &files,
+                                  TrackSet *trackSet,
+                                  const QString &ofName)
+{
+    if (type == "KLT") {
+        kltTracker->getFromFiles(files, trackSet, ofName);
+    }
+}
+
+void TrackerManager::getFromImage(const cv::Mat &img,
+                                  TrackSet *trackSet)
+{
+    if (type == "KLT") {
+        kltTracker->getFromImage(img, trackSet);
+    }
+}
+
+void TrackerManager::finish()
+{
+    if (type == "KLT") {
+        kltTracker->finish();
+        delete kltTracker;
+        kltTracker = NULL;
     }
 }

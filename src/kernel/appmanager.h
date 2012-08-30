@@ -7,6 +7,9 @@
 #include <QFileInfoList>
 #include <QVector>
 
+#include <opencv2/opencv.hpp>
+
+#include "coherentfilter.h"
 #include "kernelutils.h"
 
 class AppManager : public QObject
@@ -14,17 +17,16 @@ class AppManager : public QObject
     Q_OBJECT
 
 public:
-    explicit AppManager(QFileInfoList *files, TrackSet *trackSet,
-                        const QString &type, const QString &params,
-                        const QString &outputFileName,
+    explicit AppManager(const QString &type, const QString &params,
                         QObject *parent = 0);
-    void work();
+
+    void displayResult(const QString &windowName, const TrackSet &trackSet, cv::Mat &img);
+    void saveResult(const TrackSet &trackSet, const QString &ifName, const QString &ofName);
 
 private:
-    QFileInfoList *files;
-    TrackSet *trackSet;
-    QString type, params;
-    QString outputFileName;
+    QString type;
+
+    CoherentFilter *coherentFilter;
 };
 
 #endif // APPMANAGER_H
