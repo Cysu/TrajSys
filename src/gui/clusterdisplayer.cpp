@@ -34,7 +34,7 @@ void ClusterDisplayer::display()
         cv::Mat img = cv::imread(files.at(i).filePath().toStdString());
         if (i < clusterSet.size()) drawCluster(img, clusterSet[i]);
         cv::imshow("Cluster Displayer", img);
-        if (cv::waitKey(100) >= 0) break;
+        if (cv::waitKey(50) >= 0) break;
     }
     cv::destroyWindow("Cluster Displayer");
 }

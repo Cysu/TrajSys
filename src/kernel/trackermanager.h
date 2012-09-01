@@ -24,7 +24,7 @@ public:
                       const QString &ofName = "");
 
     void getFromImage(const cv::Mat &img,
-                      TrackSet *trackSet);
+                      TrackSet *trackSet, bool *(&mark));
 
     void finish();
 

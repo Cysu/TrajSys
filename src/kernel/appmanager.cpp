@@ -10,10 +10,10 @@ AppManager::AppManager(const QString &type, const QString &params,
     }
 }
 
-void AppManager::displayResult(const QString &windowName, const TrackSet &trackSet, cv::Mat &img)
+void AppManager::displayResult(const QString &windowName, const TrackSet &trackSet, bool *isForeground, cv::Mat &img)
 {
     if (type == "Coherent Filter") {
-        coherentFilter->displayResult(windowName, trackSet, img);
+        coherentFilter->displayResult(windowName, trackSet, isForeground, img);
     }
 }
 

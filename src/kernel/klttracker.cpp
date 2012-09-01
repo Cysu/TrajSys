@@ -95,7 +95,7 @@ void KltTracker::getFromFiles(const QFileInfoList &files,
 }
 
 void KltTracker::getFromImage(const cv::Mat &img,
-                              TrackSet *trackSet)
+                              TrackSet *trackSet, bool *(&mark))
 {
     if (tc == NULL) {
         // This is the first frame.
@@ -144,9 +144,10 @@ void KltTracker::getFromImage(const cv::Mat &img,
 
     prevFrame = img.clone();
     for (int k = 0; k < nrFeatures; k ++) {
-        if (!isForeground[k]) continue;
+//        if (!isForeground[k]) continue;
         trackSet->push_back(tracks[k]);
     }
+    mark = isForeground;
 }
 
 void KltTracker::finish()
@@ -184,14 +185,14 @@ void KltTracker::addTrackPoint(int idx, int t, int x, int y)
 
 bool KltTracker::isStableTrack(const Track &track)
 {
-    if (track.size() <= 20) return false;
+    if (track.size() <= 10) return false;
     int x0 = track.back().x;
     int y0 = track.back().y;
 
-    for (int i = track.size()-20; i < track.size()-1; i ++) {
+    for (int i = track.size()-10; i < track.size()-1; i ++) {
         int x = track[i].x, y = track[i].y;
         int d = SQR(x-x0) + SQR(y-y0);
-        if (d >= 9) return false;
+        if (d >= 16) return false;
     }
 
     return true;

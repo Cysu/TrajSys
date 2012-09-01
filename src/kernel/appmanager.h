@@ -20,7 +20,7 @@ public:
     explicit AppManager(const QString &type, const QString &params,
                         QObject *parent = 0);
 
-    void displayResult(const QString &windowName, const TrackSet &trackSet, cv::Mat &img);
+    void displayResult(const QString &windowName, const TrackSet &trackSet, bool *isForeground, cv::Mat &img);
     void saveResult(const TrackSet &trackSet, const QString &ifName, const QString &ofName);
 
 private:

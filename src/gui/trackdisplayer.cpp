@@ -31,7 +31,7 @@ void TrackDisplayer::display(const QString &window, const QString &trkFile)
         cv::Mat img = cv::imread(files.at(i).filePath().toStdString());
         drawTrack(img, trackSet, i);
         cv::imshow(window.toStdString(), img);
-        if (cv::waitKey(100) >= 0) break;
+        if (cv::waitKey(50) >= 0) break;
     }
 }
 
@@ -45,7 +45,7 @@ void TrackDisplayer::drawTrack(cv::Mat &img, const TrackSet &trackSet, int time)
 {
     for (int i = 0; i < trackSet.size(); i ++) {
         const Track &track = trackSet[i];
-        if (track.size() < 5) continue;
+        if (track.size() < 10) continue;
 
         int j;
         if (time != -1) {
@@ -61,7 +61,7 @@ void TrackDisplayer::drawTrack(cv::Mat &img, const TrackSet &trackSet, int time)
 
         for (int k = s+1; k <= j; k ++) {
             q = cv::Point(track[k].x, track[k].y);
-            cv::line(img, p, q, EXAMPLE_COLOR[i%6], 1);
+            cv::line(img, p, q, EXAMPLE_COLOR[i%6], 2);
             p = q;
         }
     }

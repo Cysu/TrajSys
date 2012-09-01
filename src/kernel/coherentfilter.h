@@ -18,7 +18,7 @@ public:
     explicit CoherentFilter(const QString &params,
                             QObject *parent = 0);
 
-    void displayResult(const QString &windowName, const TrackSet &trackSet, cv::Mat &img);
+    void displayResult(const QString &windowName, const TrackSet &trackSet, bool *isForeground, cv::Mat &img);
     void saveResult(const TrackSet &trackSet, const QString &ifName, const QString &ofName);
     
 private:
@@ -28,6 +28,8 @@ private:
 
     int startFrame, endFrame, nrFrame;
     int nrFeature;
+
+    int frameIdx;
 
     int *nrTrack;
     int *trackLists;

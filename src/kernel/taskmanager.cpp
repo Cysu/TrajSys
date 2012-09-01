@@ -30,14 +30,14 @@ void TaskManager::handleTasks()
                 TrackerManager trackerManager(task.trackerType, task.trackerParams);
                 trackerManager.getFromFiles(
                             files, &trackSet,
-                            "D:/CST/MyProgram/TrajSys/output/"+src.fileName()+
+                            "../output/"+src.fileName()+
                             "_("+task.trackerParams+").trk");
 
                 AppManager appManager(task.appType, task.appParams);
                 appManager.saveResult(
                             trackSet,
                             files.at(0).absolutePath(),
-                            "D:/CST/MyProgram/TrajSys/output/"+src.fileName()+
+                            "../output/"+src.fileName()+
                             "_("+task.appParams+")");
 
             } else {
@@ -66,14 +66,17 @@ void TaskManager::handleTasks()
 
                     if (frameIdx < 30) continue;
 
+                    CvSize size = {320, 240};
+                    cv::resize(img, img, size);
                     cv::cvtColor(img, grayimg, CV_BGR2GRAY);
 
                     TrackSet trackSet;
-                    trackerManager.getFromImage(grayimg, &trackSet);
+                    bool *mark;
+                    trackerManager.getFromImage(grayimg, &trackSet, mark);
 
 //                    trackDisplayer.display(windowName, trackSet, img);
 
-                    appManager.displayResult(windowName, trackSet, img);
+                    appManager.displayResult(windowName, trackSet, mark, img);
 
                 }
 

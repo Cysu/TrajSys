@@ -26,7 +26,7 @@ public:
 
     // Online mode.
     void getFromImage(const cv::Mat &img,
-                      TrackSet *trackSet);
+                      TrackSet *trackSet, bool *(&mark));
 
     void finish();
     

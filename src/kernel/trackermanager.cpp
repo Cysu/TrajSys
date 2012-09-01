@@ -20,10 +20,10 @@ void TrackerManager::getFromFiles(const QFileInfoList &files,
 }
 
 void TrackerManager::getFromImage(const cv::Mat &img,
-                                  TrackSet *trackSet)
+                                  TrackSet *trackSet, bool *(&mark))
 {
     if (type == "KLT") {
-        kltTracker->getFromImage(img, trackSet);
+        kltTracker->getFromImage(img, trackSet, mark);
     }
 }
 
