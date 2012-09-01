@@ -1,25 +1,54 @@
 #include "appmanager.h"
 
 AppManager::AppManager(const QString &type, const QString &params,
+                       const int &nrFeature,
+                       const QString &srcPath, const QString &ofPath,
                        QObject *parent) :
-    QObject(parent),
-    type(type)
+    QObject(parent)
 {
+    coherentFilter = NULL;
+    clusterPoints = NULL;
     if (type == "Coherent Filter") {
-        coherentFilter = new CoherentFilter(params);
+        coherentFilter = new CoherentFilter(params, nrFeature);
+        clusterPoints = new ClusterPoint[nrFeature];
+    }
+
+    clusterIO = NULL;
+    if (ofPath != "") {
+        clusterIO = new ClusterIO;
+        clusterIO->setOutput(ofPath);
+
+        clusterIO->writeInfo(srcPath, nrFeature);
     }
 }
 
-void AppManager::displayResult(const QString &windowName, const TrackSet &trackSet, bool *isForeground, cv::Mat &img)
+void AppManager::release()
 {
-    if (type == "Coherent Filter") {
-        coherentFilter->displayResult(windowName, trackSet, isForeground, img);
+    if (coherentFilter != NULL) {
+        coherentFilter->release();
+        delete coherentFilter;
+        coherentFilter = NULL;
+        delete[] clusterPoints;
+        clusterPoints = NULL;
+    }
+
+    if (clusterIO != NULL) {
+        clusterIO->closeInput();
+        clusterIO->closeOutput();
+        delete clusterIO;
+        clusterIO = NULL;
     }
 }
 
-void AppManager::saveResult(const TrackSet &trackSet, const QString &ifName, const QString &ofName)
+void AppManager::getResult(const cv::Mat &frame, TrackPoint *trackPoints)
 {
-    if (type == "Coherent Filter") {
-        coherentFilter->saveResult(trackSet, ifName, ofName+".cls");
+    bool ready = false;
+    if (coherentFilter != NULL) {
+        ready = coherentFilter->getClusterPoints(trackPoints, clusterPoints);
+    }
+
+    if (clusterIO != NULL) {
+        if (ready) clusterIO->writeFrame(clusterPoints);
+        eles clusterIO->writeFrame(NULL);
     }
 }

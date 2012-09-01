@@ -1,7 +1,5 @@
 #include "mainwindow.h"
 #include "guiutils.h"
-#include "trackdisplayer.h"
-#include "clusterdisplayer.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -47,13 +45,13 @@ void MainWindow::displayTrack()
                 tr("Track (*.trk)"));
     if (path.isEmpty()) return;
 
-    QString windowName = "Track Displayer";
-    cv::namedWindow(windowName.toStdString());
+//    QString windowName = "Track Displayer";
+//    cv::namedWindow(windowName.toStdString());
 
-    TrackDisplayer trackDisplayer;
-    trackDisplayer.display(windowName, path);
+//    TrackDisplayer trackDisplayer;
+//    trackDisplayer.display(windowName, path);
 
-    cv::destroyWindow(windowName.toStdString());
+//    cv::destroyWindow(windowName.toStdString());
 }
 
 void MainWindow::displayCluster()
@@ -63,6 +61,6 @@ void MainWindow::displayCluster()
                 tr("Cluster (*.cls)"));
     if (path.isEmpty()) return;
 
-    ClusterDisplayer clusterDisplayer(path);
-    clusterDisplayer.display();
+//    ClusterDisplayer clusterDisplayer(path);
+//    clusterDisplayer.display();
 }

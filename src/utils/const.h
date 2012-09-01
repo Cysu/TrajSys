@@ -14,7 +14,7 @@ const QString TRACKERS_TYPES[NR_TRACKERS] =
 };
 const QString TRACKERS_DEFAULT_PARAMS[NR_TRACKERS] =
 {
-    "700,26"
+    "700,26,10"
 };
 
 /**

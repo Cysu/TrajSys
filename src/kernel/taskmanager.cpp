@@ -1,8 +1,7 @@
 #include "taskmanager.h"
 #include "trackermanager.h"
 #include "appmanager.h"
-#include "kernelutils.h"
-#include "gui/trackdisplayer.h"
+#include "sourcemanager.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -17,35 +16,44 @@ void TaskManager::handleTasks()
 {
     for (int i = 0; i < tasks.size(); i ++) {
         Task &task = tasks[i];
+        QString ofPath = "../output/" + QFileInfo(task.sources).fileName();
+        QString trackerOfPath = (task.sources == "Camera") ?
+                    "" : ofPath+"("+task.trackerParams+").trk";
+        QString appOfPath = (task.sources == "Camera") ?
+                    "" : ofPath+"("+task.appParams+").cls";
 
-        if (task.mode == "Offline") {
+        SourceManager sourceManager(task.sources);
+        TrackerManager trackerManager(task.trackerType, task.trackerParams,
+                                      task.sources, trackerOfPath);
+        AppManager appManager(task.appType, task.appParams, trackerManager.getNrFeature(),
+                              task.sources, appOfPath);
 
-            QFileInfo src(task.sources);
-            if (src.isDir()) {
-                QFileInfoList files;
-                getImageFiles(task.sources, files);
+        cv::Mat frame;
+        TrackPoint *trackPoints = new TrackPoint[trackerManager.getNrFeature()];
 
-                TrackSet trackSet;
+        if (trackerManager.getFgThres() > 0) {
+            int frameIdx = sourceManager.getNextFrame(frame);
+            if (frameIdx == -1) return;
+            trackerManager.recordBgFrame(frame);
+        }
 
-                TrackerManager trackerManager(task.trackerType, task.trackerParams);
-                trackerManager.getFromFiles(
-                            files, &trackSet,
-                            "../output/"+src.fileName()+
-                            "_("+task.trackerParams+").trk");
+        while (true) {
+            int frameIdx = sourceManager.getNextFrame(frame);
+            if (frameIdx == -1) break;
 
-                AppManager appManager(task.appType, task.appParams);
-                appManager.saveResult(
-                            trackSet,
-                            files.at(0).absolutePath(),
-                            "../output/"+src.fileName()+
-                            "_("+task.appParams+")");
+            trackerManager.getTrackPoints(frame, trackPoints);
 
-            } else {
+            appManager.getResult(frame, trackPoints);
+        }
 
-            }
+        delete[] trackPoints;
 
-        } else if (task.mode == "Online") {
-            if (task.sources == "Camera") {
+        sourceManager.release();
+        trackerManager.release();
+        appManager.release();
+    }
+
+            /*if (task.sources == "Camera") {
 
                 cv::VideoCapture videoCapture(0);
                 if (!videoCapture.isOpened()) return;
@@ -82,16 +90,7 @@ void TaskManager::handleTasks()
 
                 cv::destroyWindow(windowName.toStdString());
                 trackerManager.finish();
-            }
+            } else
         }
-    }
-}
-
-void TaskManager::getImageFiles(const QString &folder, QFileInfoList &files)
-{
-    QDir dir(folder);
-    QStringList imgFilters;
-    imgFilters << "*.bmp" << "*.jpg"<< "*.tiff" << "*.jpeg" << "*.png";
-    dir.setNameFilters(imgFilters);
-    files = dir.entryInfoList();
+    }*/
 }

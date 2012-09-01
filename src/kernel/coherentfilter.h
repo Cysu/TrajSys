@@ -2,47 +2,48 @@
 #define COHERENTFILTER_H
 
 #include <QObject>
-#include <QFileInfoList>
 #include <QString>
 #include <QStringList>
 
 #include <opencv2/opencv.hpp>
 
-#include "kernelutils.h"
+#include "utils/utils.h"
 
 class CoherentFilter : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit CoherentFilter(const QString &params,
+    explicit CoherentFilter(const QString &params, const int &nrFeature,
                             QObject *parent = 0);
 
-    void displayResult(const QString &windowName, const TrackSet &trackSet, bool *isForeground, cv::Mat &img);
-    void saveResult(const TrackSet &trackSet, const QString &ifName, const QString &ofName);
+    bool getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clusterPoints);
+
+    void release();
     
 private:
-    // Parameters.
     int period, nrNeighbor;
     double vThres;
-
-    int startFrame, endFrame, nrFrame;
     int nrFeature;
 
     int frameIdx;
 
-    int *nrTrack;
-    int *trackLists;
+    TrackPoint *bufTrackPoints;
+    ClusterPoint *bufClusterPoints;
+
     int *knn;
-    int *label;
+    int *dist;
+    int *idx;
+    int *father;
+    int *vote;
+    bool *conn;
+    int *length;
+    int *tot;
 
     void parseParams(const QString &params);
-    void computeTrackLists(const TrackSet &trackSet);
-    void computeKNN(const TrackSet &trackSet);
-    void KNNSort(int *dist, int *idx, int l, int r);
-    TrackPoint getTrackPoint(const TrackSet &trackSet, int idx, int t);
+    void knnSort(int *dist, int *idx, int l, int r);
     void unionJoin(int *father, int i, int j);
-    int unionGetRoot(int *father, int i);    
+    int unionGetRoot(int *father, int i);
 };
 
 #endif // COHERENTFILTER_H

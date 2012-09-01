@@ -22,24 +22,22 @@ private slots:
     void delItems();
     void delAll();
 
-    void selectFolder();
-    void selectVideo();
+    void selectFiles();
+    void selectCamera();
+
+
     
 private:
+    QRadioButton *selectFilesRadioButton;
+    QRadioButton *selectCameraRadioButton;
+    QGroupBox *selectSourceGroupBox;
+
     QListWidget *sourcesListWidget;
     QPushButton *addFolderPushButton;
     QPushButton *addVideoPushButton;
     QPushButton *delItemsPushButton;
     QPushButton *delAllPushButton;
-
-    QRadioButton *selectFolderRadioButton;
-    QRadioButton *selectVideoRadioButton;
-    QRadioButton *selectCameraRadioButton;
-    QGroupBox *selectSourceGroupBox;
-    QLineEdit *selectFolderLineEdit;
-    QLineEdit *selectVideoLineEdit;
-    QPushButton *selectFolderPushButton;
-    QPushButton *selectVideoPushButton;
+    QGroupBox *selectFilesGroupBox;
     
 };
 

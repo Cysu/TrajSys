@@ -3,14 +3,12 @@
 
 MainWizard::MainWizard(QWidget *parent) :
     QWizard(parent),
-    modesPage(new ModesPage),
     sourcesPage(new SourcesPage),
     trackersPage(new TrackersPage),
     appsPage(new AppsPage)
 {
     setWindowTitle(tr("Trajectory Analysis Wizard"));
 
-    addPage(modesPage);
     addPage(sourcesPage);
     addPage(trackersPage);
     addPage(appsPage);
@@ -18,9 +16,6 @@ MainWizard::MainWizard(QWidget *parent) :
 
 void MainWizard::accept()
 {
-    QString mode;
-    getMode(mode);
-
     QStringList sources;
     getSources(sources);
 
@@ -34,7 +29,6 @@ void MainWizard::accept()
     for (int i = 0; i < sources.size(); i ++) {
         TaskManager::Task task =
         {
-            mode,
             sources[i],
             trackersType[i],
             trackersParams[i],

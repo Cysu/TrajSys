@@ -5,12 +5,12 @@
 #include <QString>
 #include <QStringList>
 #include <QFileInfoList>
-#include <QVector>
 
 #include <opencv2/opencv.hpp>
 
 #include "coherentfilter.h"
-#include "kernelutils.h"
+#include "utils/utils.h"
+#include "utils/clusterio.h"
 
 class AppManager : public QObject
 {
@@ -18,15 +18,19 @@ class AppManager : public QObject
 
 public:
     explicit AppManager(const QString &type, const QString &params,
+                        const int &nrFeature,
+                        const QString &srcPath, const QString &ofPath,
                         QObject *parent = 0);
 
-    void displayResult(const QString &windowName, const TrackSet &trackSet, bool *isForeground, cv::Mat &img);
-    void saveResult(const TrackSet &trackSet, const QString &ifName, const QString &ofName);
+    void getResult(const cv::Mat &frame, TrackPoint *trackPoints);
+
+    void release();
 
 private:
-    QString type;
+    ClusterIO *clusterIO;
 
     CoherentFilter *coherentFilter;
+    ClusterPoint *clusterPoints;
 };
 
 #endif // APPMANAGER_H

@@ -3,7 +3,6 @@
 
 #include <QtGui>
 
-#include "modespage.h"
 #include "sourcespage.h"
 #include "trackerspage.h"
 #include "appspage.h"
@@ -17,9 +16,6 @@ public:
 
     void accept();
 
-    inline void getMode(QString &mode) {
-        modesPage->getMode(mode);
-    }
     inline void getSources(QStringList &sources) {
         sourcesPage->getSources(sources);
     }
@@ -31,7 +27,6 @@ public:
     }
 
 private:
-    ModesPage *modesPage;
     SourcesPage *sourcesPage;
     TrackersPage *trackersPage;
     AppsPage *appsPage;

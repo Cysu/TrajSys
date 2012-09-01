@@ -32,20 +32,17 @@ SOURCES += gui/main.cpp\
     utils/klt/convolve.c \
     gui/mainwizard.cpp \
     kernel/taskmanager.cpp \
-    utils/utils.cpp \
     gui/sourcespage.cpp \
     gui/trackerspage.cpp \
     gui/appspage.cpp \
-    gui/modespage.cpp \
     kernel/trackermanager.cpp \
     kernel/appmanager.cpp \
     kernel/klttracker.cpp \
-    kernel/kernelutils.cpp \
     kernel/coherentfilter.cpp \
-    kernel/trackio.cpp \
-    gui/trackdisplayer.cpp \
-    gui/clusterdisplayer.cpp \
-    kernel/clusterio.cpp
+    utils/trackio.cpp \
+    utils/clusterio.cpp \
+    utils/frameio.cpp \
+    kernel/sourcemanager.cpp
 
 HEADERS  += gui/mainwindow.h \
     utils/klt/pyramid.h \
@@ -59,17 +56,15 @@ HEADERS  += gui/mainwindow.h \
     gui/mainwizard.h \
     utils/const.h \
     kernel/taskmanager.h \
-    utils/utils.h \
     gui/sourcespage.h \
     gui/trackerspage.h \
     gui/appspage.h \
-    gui/modespage.h \
     kernel/trackermanager.h \
     kernel/appmanager.h \
-    kernel/kernelutils.h \
     kernel/klttracker.h \
     kernel/coherentfilter.h \
-    kernel/trackio.h \
-    gui/trackdisplayer.h \
-    gui/clusterdisplayer.h \
-    kernel/clusterio.h
+    utils/trackio.h \
+    utils/clusterio.h \
+    utils/frameio.h \
+    kernel/sourcemanager.h \
+    utils/utils.h

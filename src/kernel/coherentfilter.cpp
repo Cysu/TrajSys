@@ -1,186 +1,62 @@
 #include "coherentfilter.h"
-#include "clusterio.h"
-#include "gui/guiutils.h"
 
 #include <QSet>
 #include <cmath>
 
 #define KNN(t, i, k) knn[(t)*nrFeature*nrNeighbor + (i)*nrNeighbor + (k)]
-#define TRACKLISTS(t, i) trackLists[(t)*nrFeature + (i)]
-#define LABEL(t, i) label[(t)*nrFeature + (i)]
+#define BUFTP(t, i) bufTrackPoints[(t)*nrFeature + i]
 #define VOTE(r, l) vote[(r)*nrFeature + (l)]
 #define CONN(i, j) conn[(i)*nrFeature + (j)]
 
-CoherentFilter::CoherentFilter(const QString &params,
+CoherentFilter::CoherentFilter(const QString &params, const int &nrFeature,
                                QObject *parent) :
-    QObject(parent)
+    QObject(parent),
+    nrFeature(nrFeature)
 {
     parseParams(params);
 
     frameIdx = 0;
+
+    knn = new int[(period+1) * nrFeature * nrNeighbor];
+    dist = new int[nrFeature];
+    idx = new int[nrFeature];
+
+    length = new int[nrFeature];
+    tot = new int[nrFeature];
+
+    father = new int[nrFeature];
+    vote = new int[nrFeature * nrFeature];
+    conn = new bool[nrFeature * nrFeature];
+
+    bufTrackPoints = new TrackPoint[(period+1) * nrFeature];
+    bufClusterPoints = new ClusterPoint[nrFeature];
 }
 
-void CoherentFilter::saveResult(const TrackSet &trackSet,
-                                const QString &ifName, const QString &ofName)
+void CoherentFilter::release()
 {
-    // Initialize the output.
-    ClusterIO clusterIO;
-    clusterIO.setOutput(ofName);
-    clusterIO.writePath(ifName);
-
-    computeTrackLists(trackSet);
-    computeKNN(trackSet);
-
-    label = new int[nrFrame * nrFeature];
-    memset(label, -1, nrFrame*nrFeature*sizeof(int));
-
-    int *father = new int[nrFeature];
-    int *vote = new int[nrFeature * nrFeature];
-    bool *conn = new bool[nrFeature * nrFeature];
-
-    for (int t = 0; t < nrFrame-period; t ++) {
-        int time = startFrame+t;
-        memset(conn, false, nrFeature*nrFeature*sizeof(bool));
-
-        for (int i = 0; i < nrTrack[t]; i ++) {
-            if (TRACKLISTS(t, i) == -1) continue;
-            if (TRACKLISTS(t+period, i) != TRACKLISTS(t, i)) continue;
-
-            for (int k = 0; k < nrNeighbor; k ++) {
-                int j = KNN(t, i, k);
-
-                // Find invariant neighbor.
-                int nbIdx = TRACKLISTS(t, j);
-                bool isInvariant = true;
-                for (int dt = 1; dt <= period; dt ++) {
-                    bool contain = false;
-                    for (int r = 0; r < nrNeighbor; r ++) {
-                        if (TRACKLISTS(t+dt, KNN(t+dt, i, r)) == nbIdx) {
-                            contain = true;
-                            break;
-                        }
-                    }
-                    if (!contain) {
-                        isInvariant = false;
-                        break;
-                    }
-                }
-                if (!isInvariant) continue;
-
-                // Compute the velocity coherence.
-                double g = 0;
-                for (int dt = 0; dt < period; dt ++) {
-                    TrackPoint u1 = getTrackPoint(trackSet, TRACKLISTS(t+dt, i), time+dt);
-                    TrackPoint v1 = getTrackPoint(trackSet, TRACKLISTS(t+dt, j), time+dt);
-                    TrackPoint u2 = getTrackPoint(trackSet, TRACKLISTS(t+dt+1, i), time+dt+1);
-                    TrackPoint v2 = getTrackPoint(trackSet, TRACKLISTS(t+dt+1, j), time+dt+1);
-                    int ux = u2.x-u1.x, uy = u2.y-u1.y;
-                    int vx = v2.x-v1.x, vy = v2.y-v1.y;
-                    int u = SQR(ux)+SQR(uy);
-                    int v = SQR(vx)+SQR(vy);
-                    if (u == 0 && v == 0)
-                        g += 1.0;
-                    else if (u != 0 && v != 0)
-                        g += (ux*vx+uy*vy) / sqrt(u*v);
-                    else
-                        g += 0.5;
-                }
-                g /= period;
-                if (g > vThres) CONN(i, j) = true;
-            }
-        }
-
-        // Construct clusters.
-        for (int i = 0; i < nrTrack[t]; i ++) father[i] = i;
-        for (int i = 0; i < nrTrack[t]; i ++) {
-            if (TRACKLISTS(t, i) == -1) continue;
-            for (int j = i+1; j < nrTrack[t]; j ++) {
-                if (TRACKLISTS(t, j) == -1) continue;
-                if (CONN(i, j) && CONN(j, i))
-                    unionJoin(father, i, j);
-            }
-        }
-
-        if (t > 0) {
-            QSet<int> labels;
-            for (int i = 0; i < nrTrack[t]; i ++) {
-                if (TRACKLISTS(t, i) == -1) continue;
-                if (TRACKLISTS(t+period, i) != TRACKLISTS(t, i)) continue;
-                if (TRACKLISTS(t, i) == TRACKLISTS(t-1, i)) {
-                    LABEL(t, i) = LABEL(t-1, i);
-                    labels.insert(LABEL(t, i));
-                }
-            }
-            int validLabel = 0;
-            for (int i = 0; i < nrTrack[t]; i ++) {
-                if (TRACKLISTS(t, i) == -1) continue;
-                if (TRACKLISTS(t+period, i) != TRACKLISTS(t, i)) continue;
-                if (TRACKLISTS(t, i) != TRACKLISTS(t-1, i)) {
-                    while (labels.find(validLabel) != labels.end()) validLabel ++;
-                    LABEL(t, i) = validLabel;
-                    labels.insert(validLabel);
-                }
-            }
-
-            memset(vote, 0, nrFeature*nrFeature*sizeof(int));
-            QSet<int> roots;
-            for (int i = 0; i < nrTrack[t]; i ++) {
-                if (TRACKLISTS(t, i) == -1) continue;
-                if (TRACKLISTS(t+period, i) != TRACKLISTS(t, i)) continue;
-                int ri = unionGetRoot(father, i);
-                roots.insert(ri);
-                VOTE(ri, LABEL(t, i)) ++;
-            }
-
-            foreach (int r, roots) {
-                int maxVote = 0, maxLabel = -1;
-                for (int i = 0; i < nrTrack[t]; i ++) {
-                    if (TRACKLISTS(t, i) == -1 || LABEL(t, i) == -1) continue;
-                    if (TRACKLISTS(t+period, i) != TRACKLISTS(t, i)) continue;
-                    if (VOTE(r, LABEL(t, i)) > maxVote) {
-                        maxVote = VOTE(r, LABEL(t, i));
-                        maxLabel = LABEL(t, i);
-                    }
-                }
-                LABEL(t, r) = maxLabel;
-            }
-
-            for (int i = 0; i < nrTrack[t]; i ++) {
-                if (TRACKLISTS(t, i) == -1) continue;
-                if (TRACKLISTS(t+period, i) != TRACKLISTS(t, i)) continue;
-                int ri = unionGetRoot(father, i);
-                LABEL(t, i) = LABEL(t, ri);
-            }
-        }
-
-//        for (int i = 0; i < nrTrack[t]; i ++) {
-//            if (TRACKLISTS(t, i) == -1) continue;
-//            if (TRACKLISTS(t+period, i) != TRACKLISTS(t, i)) continue;
-//            int ri = unionGetRoot(father, i);
-//            LABEL(t, i) = ri;
-//        }
-
-        Cluster cluster;
-        for (int i = 0; i < nrTrack[t]; i ++) {
-            if (TRACKLISTS(t, i) == -1) continue;
-            if (LABEL(t, i) == -1) continue;
-            TrackPoint trackPoint = getTrackPoint(trackSet, TRACKLISTS(t, i), time);
-            ClusterPoint clusterPoint = {
-                LABEL(t, i),
-                trackPoint.x,
-                trackPoint.y
-            };
-            cluster.push_back(clusterPoint);
-        }
-
-        clusterIO.writeCluster(cluster);
-    }
-
-    clusterIO.closeOutput();
-
+    delete[] knn;
+    delete[] dist;
+    delete[] idx;
+    delete[] length;
+    delete[] tot;
     delete[] father;
     delete[] vote;
     delete[] conn;
+    delete[] bufTrackPoints;
+    delete[] bufClusterPoints;
+
+    knn = NULL;
+    dist = NULL;
+    idx = NULL;
+    length = NULL;
+    tot = NULL;
+    father = NULL;
+    vote = NULL;
+    conn = NULL;
+    bufTrackPoints = NULL;
+    bufClusterPoints = NULL;
+
+    frameIdx = 0;
 }
 
 void CoherentFilter::parseParams(const QString &params)
@@ -191,57 +67,52 @@ void CoherentFilter::parseParams(const QString &params)
     vThres = paramList.at(2).toDouble();
 }
 
-void CoherentFilter::displayResult(const QString &windowName, const TrackSet &trackSet, bool *isForeground, cv::Mat &img)
+bool CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clusterPoints)
 {
+    int cntTid = frameIdx % (period+1);
+
+    // First copy the trackpoints to buffer.
+    for (int i = 0; i < nrFeature; i ++) BUFTP(cntTid, i) = trackPoints[i];
+
+    // Compute the length of each track.
     if (frameIdx == 0) {
-        nrFeature = trackSet.size();
-
-        knn = new int[(period+1) * nrFeature * nrNeighbor];
-        label = new int[(period+1) * nrFeature];
-
-        memset(label, -1, (period+1)*nrFeature*sizeof(int));
+        for (int i = 0; i < nrFeature; i ++) length[i] = 1;
+    } else {
+        for (int i = 0; i < nrFeature; i ++) {
+            if (trackPoints[i].flag & FLAG_NEW_TRACKPOINT) length[i] = 1;
+            else length[i] ++;
+        }
     }
 
-    int t = frameIdx % (period+1);
-
-    int *dist = new int[nrFeature];
-    int *idx = new int[nrFeature];
-
+    // Compute the KNN of this frame.
     for (int i = 0; i < nrFeature; i ++) {
-        if (!isForeground[i]) continue;
-        TrackPoint u = trackSet[i].back();
+        if (!(trackPoints[i].flag & FLAG_IS_FOREGROUND)) continue;
+        TrackPoint &u = trackPoints[i];
         for (int j = 0; j < nrFeature; j ++) {
             idx[j] = j;
             dist[j] = 0x7fffffff;
-            if (!isForeground[j] || i == j) continue;
-            TrackPoint v = trackSet[j].back();
+            if (i == j || !(trackPoints[j].flag & FLAG_IS_FOREGROUND)) continue;
+            TrackPoint &v = trackPoints[j];
             dist[j] = SQR(u.x-v.x) + SQR(u.y-v.y);
         }
-        KNNSort(dist, idx, 0, nrFeature-1);
-        for (int k = 0; k < nrNeighbor; k ++) KNN(t, i, k) = idx[k];
+        knnSort(dist, idx, 0, nrFeature-1);
+        for (int k = 0; k < nrNeighbor; k ++) KNN(cntTid, i, k) = idx[k];
     }
-
-    delete[] dist;
-    delete[] idx;
 
     if (frameIdx < period) {
         frameIdx ++;
-        return;
+        return false;
     }
 
-    int *father = new int[nrFeature];
-    int *vote = new int[nrFeature * nrFeature];
-    bool *conn = new bool[nrFeature * nrFeature];
-
+    // Find coherent neighbors.
     memset(conn, false, nrFeature*nrFeature*sizeof(bool));
-
     for (int i = 0; i < nrFeature; i ++) {
-        if (trackSet[i].size() < period) continue;
-        if (!isForeground[i]) continue;
+        if (length[i] < period+1) continue;
+        if (!(trackPoints[i].flag & FLAG_IS_FOREGROUND)) continue;
 
         for (int k = 0; k < nrNeighbor; k ++) {
-            int j = KNN(t, i, k);
-            if (trackSet[j].size() < period) continue;
+            int j = KNN(cntTid, i, k);
+            if (length[j] < period+1) continue;
 
             // Find invariant neighbor.
             bool isInvariant = true;
@@ -264,12 +135,12 @@ void CoherentFilter::displayResult(const QString &windowName, const TrackSet &tr
             // Compute the velocity coherence.
             double g = 0;
             for (int dt = 0; dt < period; dt ++) {
-                const Track &t1 = trackSet[i];
-                const Track &t2 = trackSet[j];
-                TrackPoint u1 = t1[t1.size()-1-dt];
-                TrackPoint v1 = t2[t2.size()-1-dt];
-                TrackPoint u2 = t1[t1.size()-1-dt-1];
-                TrackPoint v2 = t2[t2.size()-1-dt-1];
+                int t1 = (frameIdx-dt) % (period+1);
+                int t2 = (frameIdx-dt-1) % (period+1);
+                TrackPoint u1 = BUFTP(t1, i);
+                TrackPoint v1 = BUFTP(t1, j);
+                TrackPoint u2 = BUFTP(t2, i);
+                TrackPoint v2 = BUFTP(t2, j);
                 int ux = u2.x-u1.x, uy = u2.y-u1.y;
                 int vx = v2.x-v1.x, vy = v2.y-v1.y;
                 int u = SQR(ux)+SQR(uy);
@@ -295,171 +166,78 @@ void CoherentFilter::displayResult(const QString &windowName, const TrackSet &tr
         }
     }
 
-    int pt = (frameIdx-1) % (period+1);
+    for (int i = 0; i < nrFeature; i ++) {
+        ClusterPoint clusterPoint;
+        clusterPoint.x = trackPoints[i].x;
+        clusterPoint.y = trackPoints[i].y;
+        clusterPoint.flag = trackPoints[i].flag;
+        if (length[i] < period+1 || !(trackPoints[i].flag & FLAG_IS_FOREGROUND))
+            clusterPoint.rawLabel = -1;
+        else
+            clusterPoint.rawLabel = unionGetRoot(father, i);
+        clusterPoint.ascLabel = -1;
+        clusterPoints[i] = clusterPoint;
+    }
 
+
+    // Association.
     QSet<int> labels;
     for (int i = 0; i < nrFeature; i ++) {
-        if (!isForeground[i]) continue;
-        if (trackSet[i].size() <= period+1) continue;
-        LABEL(t, i) = LABEL(pt, i);
-        labels.insert(LABEL(t, i));
+        if (length[i] <= period+1) continue;
+        if (!(trackPoints[i].flag & FLAG_IS_FOREGROUND)) continue;
+        clusterPoints[i].ascLabel = bufClusterPoints[i].ascLabel;
+        labels.insert(clusterPoints[i].ascLabel);
     }
     int validLabel = 0;
     for (int i = 0; i < nrFeature; i ++) {
-        if (!isForeground[i]) continue;
-        if (trackSet[i].size() != period+1) continue;
+        if (length[i] != period+1) continue;
+        if (!(trackPoints[i].flag & FLAG_IS_FOREGROUND)) continue;
         while (labels.find(validLabel) != labels.end()) validLabel ++;
-        LABEL(t, i) = validLabel;
+        clusterPoints[i].ascLabel = validLabel;
         labels.insert(validLabel);
     }
 
-    memset(vote, 0, nrFeature*nrFeature*sizeof(int));
     QSet<int> roots;
-    int *tot = new int[nrFeature];
+    memset(vote, 0, nrFeature*nrFeature*sizeof(int));
     memset(tot, 0, nrFeature*sizeof(int));
     for (int i = 0; i < nrFeature; i ++) {
-        if (!isForeground[i]) continue;
-        if (trackSet[i].size() <= period) continue;
-        int ri = unionGetRoot(father, i);
-        roots.insert(ri);
-        tot[ri] ++;
-        VOTE(ri, LABEL(t, i)) ++;
+        if (length[i] < period+1) continue;
+        if (!(trackPoints[i].flag & FLAG_IS_FOREGROUND)) continue;
+        int r = unionGetRoot(father, i);
+        roots.insert(r);
+        tot[r] ++;
+        VOTE(r, clusterPoints[i].ascLabel) ++;
     }
 
     foreach (int r, roots) {
         int maxVote = 0, maxLabel = -1;
         for (int i = 0; i < nrFeature; i ++) {
-            if (!isForeground[i]) continue;
-            if (trackSet[i].size() <= period) continue;
-            if (VOTE(r, LABEL(t, i)) > maxVote) {
-                maxVote = VOTE(r, LABEL(t, i));
-                maxLabel = LABEL(t, i);
+            if (length[i] < period+1) continue;
+            if (!(trackPoints[i].flag & FLAG_IS_FOREGROUND)) continue;
+            if (VOTE(r, clusterPoints[i].ascLabel) > maxVote) {
+                maxVote = VOTE(r, clusterPoints[i].ascLabel);
+                maxLabel = clusterPoints[i].ascLabel;
             }
         }
-        LABEL(t, r) = maxLabel;
+        clusterPoints[r].ascLabel = maxLabel;
     }
 
     for (int i = 0; i < nrFeature; i ++) {
-        if (trackSet[i].size() <= period || !isForeground[i]) {
-            LABEL(t, i) = -1;
+        if (length[i] < period+1 || !(trackPoints[i].flag & FLAG_IS_FOREGROUND)) {
+            clusterPoints[i].ascLabel = -1;
         } else {
-            int ri = unionGetRoot(father, i);
-            LABEL(t, i) = LABEL(t, ri);
+            int r = unionGetRoot(father, i);
+            clusterPoints[i].ascLabel = clusterPoints[r].ascLabel;
         }
     }
 
-    for (int i = 0; i < nrFeature; i ++) {
-        if (LABEL(t, i) == -1) continue;
+    // Copy down the cluster points of this frame.
+    for (int i = 0; i < nrFeature; i ++) bufClusterPoints[i] = clusterPoints[i];
 
-        int ri = unionGetRoot(father, i);
-        if (tot[ri] < 5) continue;
-
-        const Track &track = trackSet[i];
-        const TrackPoint &trackPoint = track.back();
-        cv::Point p(trackPoint.x, trackPoint.y);
-        cv::circle(img, p, 2, EXAMPLE_COLOR[LABEL(t, i)%6], -1);
-    }
-
-    CvSize size = {640, 480};
-    cv::resize(img, img, size);
-    cv::imshow(windowName.toStdString(), img);
-
-    frameIdx ++;
-
-    delete[] father;
-    delete[] vote;
-    delete[] conn;
-    delete[] tot;
+    return true;
 }
 
-void CoherentFilter::computeTrackLists(const TrackSet &trackSet)
-{
-    startFrame = 0x7fffffff;
-    endFrame = 0;
-    for (int i = 0; i < trackSet.size(); i ++) {
-        const Track &track = trackSet[i];
-        startFrame = std::min(startFrame, track[0].t);
-        endFrame = std::max(endFrame, track.back().t);
-    }
-    nrFrame = endFrame-startFrame+1;
-
-    int *count = new int[nrFrame];
-    memset(count, 0, nrFrame*sizeof(int));
-    for (int i = 0; i < trackSet.size(); i ++) {
-        const Track &track = trackSet[i];
-        for (int t = track[0].t; t <= track.back().t; t ++)
-            count[t-startFrame] ++;
-    }
-
-    nrFeature = 0;
-    for (int t = 0; t < nrFrame; t ++)
-        nrFeature = std::max(nrFeature, count[t]);
-
-    delete[] count;
-
-
-    nrTrack = new int[nrFrame];
-    trackLists = new int[nrFrame * nrFeature];
-    int *trackIdx = new int[trackSet.size()];
-    memset(nrTrack, 0, nrFrame*sizeof(int));
-    memset(trackLists, -1, nrFrame*nrFeature*sizeof(int));
-    memset(trackIdx, -1,trackSet.size()*sizeof(int));
-
-    for (int t = 0; t < nrFrame; t ++) {
-        int time = startFrame+t;
-        int idx = 0;
-        for (int i = 0; i < trackSet.size(); i ++) {
-            const Track &track = trackSet[i];
-            if (track.back().t-track[0].t < period) continue;
-            if (track[0].t <= time && track.back().t >= time) {
-                if (trackIdx[i] == -1) {
-                    // The track is not in previous frame.
-                    while (TRACKLISTS(t, idx) != -1) idx++;
-                    trackIdx[i] = idx;
-                    TRACKLISTS(t, idx) = i;
-                    nrTrack[t] = std::max(nrTrack[t], idx+1);
-                } else{
-                    // The track is in previous frame.
-                    TRACKLISTS(t, trackIdx[i]) = i;
-                    nrTrack[t] = std::max(nrTrack[t], trackIdx[i]+1);
-                }
-            } else {
-                trackIdx[i] = -1;
-            }
-        }
-    }
-
-    delete[] trackIdx;
-}
-
-void CoherentFilter::computeKNN(const TrackSet &trackSet)
-{
-    knn = new int[nrFrame * nrFeature * nrNeighbor];
-    int *dist = new int[nrFeature];
-    int *idx = new int[nrFeature];
-
-    for (int t = 0; t < nrFrame; t ++) {
-        int time = startFrame+t;
-        for (int i = 0; i < nrTrack[t]; i ++) {
-            if (TRACKLISTS(t, i) == -1) continue;
-            TrackPoint u = getTrackPoint(trackSet, TRACKLISTS(t, i), time);
-            for (int j = 0; j < nrTrack[t]; j ++) {
-                idx[j] = j;
-                dist[j] = 0x7fffffff;
-                if (TRACKLISTS(t, j) == -1 || i == j) continue;
-                TrackPoint v = getTrackPoint(trackSet, TRACKLISTS(t, j), time);
-                dist[j] = SQR(u.x-v.x) + SQR(u.y-v.y);
-            }
-            KNNSort(dist, idx, 0, nrTrack[t]-1);
-            for (int k = 0; k < nrNeighbor; k ++) KNN(t, i, k) = idx[k];
-        }
-    }
-
-    delete[] dist;
-    delete[] idx;
-}
-
-void CoherentFilter::KNNSort(int *dist, int *idx, int l, int r)
+void CoherentFilter::knnSort(int *dist, int *idx, int l, int r)
 {
     int i = l, j = r;
     int x = dist[(i+j)>>1];
@@ -473,16 +251,8 @@ void CoherentFilter::KNNSort(int *dist, int *idx, int l, int r)
             j --;
         }
     }
-    if (l < j) KNNSort(dist, idx, l, j);
-    if (i < r) KNNSort(dist, idx, i, r);
-}
-
-TrackPoint CoherentFilter::getTrackPoint(const TrackSet &trackSet,
-                                         int trackIdx, int time)
-{
-    const Track &track = trackSet[trackIdx];
-    int i = time - track[0].t;
-    return track[i];
+    if (l < j) knnSort(dist, idx, l, j);
+    if (i < r) knnSort(dist, idx, i, r);
 }
 
 void CoherentFilter::unionJoin(int *father, int i, int j) {

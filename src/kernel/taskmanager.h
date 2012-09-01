@@ -14,7 +14,6 @@ class TaskManager : public QObject
 public:
     struct Task
     {
-        QString mode;
         QString sources;
         QString trackerType, trackerParams;
         QString appType, appParams;
@@ -26,8 +25,6 @@ public:
 
 private:
     QVector<Task> tasks;
-
-    void getImageFiles(const QString &folder, QFileInfoList &files);
 };
 
 #endif // TASKMANAGER_H

@@ -4,27 +4,26 @@
 #include <QObject>
 #include <QString>
 
-#include "kernelutils.h"
+#include "utils.h"
 
-class TrackIO : public QObject
+class TrackIO
 {
-    Q_OBJECT
-
 public:
-    explicit TrackIO(QObject *parent = 0);
+    TrackIO();
 
     void setInput(const QString &filePath);
-    bool readPath(QString &path);
-    bool readTrack(Track &track);
+    bool readInfo(QString &sourcePath, int &nrFeature);
+    bool readFrame(TrackPoint *trackPoints);
     void closeInput();
 
     void setOutput(const QString &filePath);
-    void writePath(const QString &path);
-    void writeTrack(const Track &track);
+    void writeInfo(const QString &sourcePath, const int &nrFeature);
+    void writeFrame(TrackPoint *trackPoints);
     void closeOutput();
     
 private:
     FILE *fin, *fout;
+    int nrFeature;
     
 };
 

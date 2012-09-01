@@ -8,7 +8,7 @@
 #include <QDir>
 
 #include <opencv2/opencv.hpp>
-#include "kernel/kernelutils.h"
+#include "utils/utils.h"
 
 class TrackDisplayer : public QObject
 {

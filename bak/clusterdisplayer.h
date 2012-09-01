@@ -8,7 +8,6 @@
 #include <QDir>
 
 #include <opencv2/opencv.hpp>
-#include "kernel/kernelutils.h"
 
 class ClusterDisplayer : public QObject
 {

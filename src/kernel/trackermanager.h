@@ -8,8 +8,9 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "kernelutils.h"
 #include "klttracker.h"
+#include "utils/utils.h"
+#include "utils/trackio.h"
 
 class TrackerManager : public QObject
 {
@@ -17,19 +18,21 @@ class TrackerManager : public QObject
 
 public:
     explicit TrackerManager(const QString &type, const QString &params,
+                            const QString &srcPath, const QString &ofPath,
+                            QObject *parent = 0);
+    explicit TrackerManager(const QString &ifPath,
                             QObject *parent = 0);
 
-    void getFromFiles(const QFileInfoList &files,
-                      TrackSet *trackSet,
-                      const QString &ofName = "");
+    void recordBgFrame(const cv::Mat &frame);
+    void getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints);
 
-    void getFromImage(const cv::Mat &img,
-                      TrackSet *trackSet, bool *(&mark));
+    int getNrFeature();
+    int getFgThres();
 
-    void finish();
+    void release();
 
 private:
-    QString type;
+    TrackIO *trackIO;
 
     KltTracker *kltTracker;
 };

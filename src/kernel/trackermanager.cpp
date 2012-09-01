@@ -1,37 +1,75 @@
 #include "trackermanager.h"
 
 TrackerManager::TrackerManager(const QString &type, const QString &params,
+                               const QString &srcPath, const QString &ofPath,
                                QObject *parent) :
-    QObject(parent),
-    type(type)
+    QObject(parent)
 {
+    kltTracker = NULL;
     if (type == "KLT") {
         kltTracker = new KltTracker(params);
     }
-}
 
-void TrackerManager::getFromFiles(const QFileInfoList &files,
-                                  TrackSet *trackSet,
-                                  const QString &ofName)
-{
-    if (type == "KLT") {
-        kltTracker->getFromFiles(files, trackSet, ofName);
+    trackIO = NULL;
+    if (ofPath != "") {
+        trackIO = new TrackIO;
+        trackIO->setOutput(ofPath);
+
+        trackIO->writeInfo(srcPath, kltTracker->nrFeature);
     }
 }
 
-void TrackerManager::getFromImage(const cv::Mat &img,
-                                  TrackSet *trackSet, bool *(&mark))
+TrackerManager::TrackerManager(const QString &ifPath,
+                               QObject *parent) :
+    QObject(parent)
 {
-    if (type == "KLT") {
-        kltTracker->getFromImage(img, trackSet, mark);
+    trackIO = new TrackIO;
+    trackIO->setInput(ifPath);
+}
+
+void TrackerManager::recordBgFrame(const cv::Mat &frame)
+{
+    if (kltTracker != NULL) {
+        kltTracker->recordBgFrame(frame);
     }
 }
 
-void TrackerManager::finish()
+void TrackerManager::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
 {
-    if (type == "KLT") {
-        kltTracker->finish();
+    if (kltTracker != NULL) {
+        kltTracker->getTrackPoints(frame, trackPoints);
+    }
+
+    if (trackIO != NULL) {
+        trackIO->writeFrame(trackPoints);
+    }
+}
+
+int TrackerManager::getNrFeature()
+{
+    if (kltTracker != NULL) return kltTracker->nrFeature;
+    return -1;
+}
+
+int TrackerManager::getFgThres()
+{
+    if (kltTracker != NULL) return kltTracker->fgThres;
+    return -1;
+}
+
+
+void TrackerManager::release()
+{
+    if (kltTracker != NULL) {
+        kltTracker->release();
         delete kltTracker;
         kltTracker = NULL;
+    }
+
+    if (trackIO != NULL) {
+        trackIO->closeInput();
+        trackIO->closeOutput();
+        delete trackIO;
+        trackIO = NULL;
     }
 }
