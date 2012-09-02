@@ -15,13 +15,20 @@ public:
     void initializePage();
 
     void getTrackers(QStringList &trackersTypes,
-                     QStringList &trackersParams);
+                     QStringList &trackersParams,
+                     QVector<bool> &needDisplay);
+
+private slots:
+    void trackersTypesChanged(int cntIdx);
+    void loadTrkFile();
     
 private:
     int nrSources;
     QLabel *sourcesLabels;
+    QCheckBox *needDisplayCheckBoxes;
     QComboBox *trackersTypesComboBoxes;
     QLineEdit *trackersParamsLineEdits;
+    QPushButton *loadTrkFilePushButtons;
 
 };
 

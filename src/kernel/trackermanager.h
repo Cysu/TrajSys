@@ -11,6 +11,7 @@
 #include "klttracker.h"
 #include "utils/utils.h"
 #include "utils/trackio.h"
+#include "utils/trackdisplayer.h"
 
 class TrackerManager : public QObject
 {
@@ -19,8 +20,7 @@ class TrackerManager : public QObject
 public:
     explicit TrackerManager(const QString &type, const QString &params,
                             const QString &srcPath, const QString &ofPath,
-                            QObject *parent = 0);
-    explicit TrackerManager(const QString &ifPath,
+                            const bool &needDisplay,
                             QObject *parent = 0);
 
     void recordBgFrame(const cv::Mat &frame);
@@ -31,8 +31,13 @@ public:
 
     void release();
 
+    QString srcPath;
+
 private:
     TrackIO *trackIO;
+    TrackDisplayer *trackDisplayer;
+
+    int nrFeature, fgThres, stThres;
 
     KltTracker *kltTracker;
 };

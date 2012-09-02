@@ -10,7 +10,10 @@ KltTracker::KltTracker(const QString &params,
     parseParams(params);
 
     // Initialize some auxiliary variables.
-    bufTrackPoints = new TrackPoint[stThres * nrFeature];
+    if (stThres > 0)
+        bufTrackPoints = new TrackPoint[stThres * nrFeature];
+    else
+        bufTrackPoints = NULL;
 
     // Initialize KLT tracker.
     tc = KLTCreateTrackingContext();
@@ -42,7 +45,11 @@ void KltTracker::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
     // First change to gray scale image.
     cv::cvtColor(frame, cntFrame, CV_BGR2GRAY);
 
-    int cntTid = frameIdx % stThres;
+    int cntTid, prevTid;
+    if (stThres > 0) {
+        cntTid = frameIdx % stThres;
+        prevTid = (frameIdx-1) % stThres;
+    }
 
     if (frameIdx == 0) {
         // Select good features to be tracked.
@@ -65,11 +72,11 @@ void KltTracker::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
             }
 
             trackPoints[k] = trackPoint;
-            BUFTP(cntTid, k) = trackPoint;
+
+            if (stThres > 0)
+                BUFTP(cntTid, k) = trackPoint;
         }
     } else {
-        int prevTid = (frameIdx-1) % stThres;
-
         // Tracking features.
         // Replace the lost features.
         int nrCols = cntFrame.cols, nrRows = cntFrame.rows;
@@ -84,14 +91,21 @@ void KltTracker::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
                 // The feature is tracked this frame.
                 TrackPoint trackPoint;
                 trackPoint.x = x;
-                trackPoint.y = y;;
+                trackPoint.y = y;
+                trackPoint.flag = 0;
 
-                if (BUFTP(prevTid, k).flag & FLAG_IS_FOREGROUND) {
-                    if (!isStableTrack(k)) trackPoint.flag = FLAG_IS_FOREGROUND;
+                if (stThres > 0) {
+                    if (BUFTP(prevTid, k).flag & FLAG_IS_FOREGROUND) {
+                        if (!isStableTrack(k)) trackPoint.flag = FLAG_IS_FOREGROUND;
+                    }
+                } else {
+                    trackPoint.flag = FLAG_IS_FOREGROUND;
                 }
 
                 trackPoints[k] = trackPoint;
-                BUFTP(cntTid, k) = trackPoint;
+
+                if (stThres > 0)
+                    BUFTP(cntTid, k) = trackPoint;
             } else if (fl->feature[k]->val > 0) {
                 // The feature is newly selected.
                 // Add the new track.
@@ -108,7 +122,9 @@ void KltTracker::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
                 }
 
                 trackPoints[k] = trackPoint;
-                BUFTP(cntTid, k) = trackPoint;
+
+                if (stThres > 0)
+                    BUFTP(cntTid, k) = trackPoint;
             }
         }
     }

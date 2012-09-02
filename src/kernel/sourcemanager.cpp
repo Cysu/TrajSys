@@ -16,3 +16,8 @@ int SourceManager::getNextFrame(cv::Mat &frame)
     return frameIO->readNextFrame(frame);
 }
 
+int SourceManager::getNrFrame()
+{
+    return frameIO->getNrFrame();
+}
+

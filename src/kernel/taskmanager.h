@@ -16,7 +16,9 @@ public:
     {
         QString sources;
         QString trackerType, trackerParams;
+        bool trackerNeedDisplay;
         QString appType, appParams;
+        bool appNeedDisplay;
     };
 
     explicit TaskManager(const QVector<Task> &tasks, QObject *parent = 0);

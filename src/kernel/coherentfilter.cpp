@@ -2,6 +2,7 @@
 
 #include <QSet>
 #include <cmath>
+#include <cstdio>
 
 #define KNN(t, i, k) knn[(t)*nrFeature*nrNeighbor + (i)*nrNeighbor + (k)]
 #define BUFTP(t, i) bufTrackPoints[(t)*nrFeature + i]
@@ -67,12 +68,13 @@ void CoherentFilter::parseParams(const QString &params)
     vThres = paramList.at(2).toDouble();
 }
 
-bool CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clusterPoints)
+void CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clusterPoints)
 {
     int cntTid = frameIdx % (period+1);
 
     // First copy the trackpoints to buffer.
     for (int i = 0; i < nrFeature; i ++) BUFTP(cntTid, i) = trackPoints[i];
+
 
     // Compute the length of each track.
     if (frameIdx == 0) {
@@ -101,7 +103,17 @@ bool CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clu
 
     if (frameIdx < period) {
         frameIdx ++;
-        return false;
+
+        for (int i = 0; i < nrFeature; i ++) {
+            ClusterPoint clusterPoint;
+            clusterPoint.x = trackPoints[i].x;
+            clusterPoint.y = trackPoints[i].y;
+            clusterPoint.flag = trackPoints[i].flag;
+            clusterPoint.rawLabel = clusterPoint.ascLabel = -1;
+            clusterPoints[i] = clusterPoint;
+        }
+
+        return;
     }
 
     // Find coherent neighbors.
@@ -234,7 +246,7 @@ bool CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clu
     // Copy down the cluster points of this frame.
     for (int i = 0; i < nrFeature; i ++) bufClusterPoints[i] = clusterPoints[i];
 
-    return true;
+    frameIdx ++;
 }
 
 void CoherentFilter::knnSort(int *dist, int *idx, int l, int r)

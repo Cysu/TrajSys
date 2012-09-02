@@ -7,14 +7,16 @@
   * Define trackers.
   **/
 
-const int NR_TRACKERS = 1;
+const int NR_TRACKERS = 2;
 const QString TRACKERS_TYPES[NR_TRACKERS] =
 {
-    "KLT"
+    "KLT",
+    "LOAD"
 };
 const QString TRACKERS_DEFAULT_PARAMS[NR_TRACKERS] =
 {
-    "700,26,10"
+    "700,26,10",
+    ""
 };
 
 /**

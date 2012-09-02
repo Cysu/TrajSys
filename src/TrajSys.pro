@@ -42,7 +42,9 @@ SOURCES += gui/main.cpp\
     utils/trackio.cpp \
     utils/clusterio.cpp \
     utils/frameio.cpp \
-    kernel/sourcemanager.cpp
+    kernel/sourcemanager.cpp \
+    utils/trackdisplayer.cpp \
+    utils/clusterdisplayer.cpp
 
 HEADERS  += gui/mainwindow.h \
     utils/klt/pyramid.h \
@@ -67,4 +69,6 @@ HEADERS  += gui/mainwindow.h \
     utils/clusterio.h \
     utils/frameio.h \
     kernel/sourcemanager.h \
-    utils/utils.h
+    utils/utils.h \
+    utils/trackdisplayer.h \
+    utils/clusterdisplayer.h

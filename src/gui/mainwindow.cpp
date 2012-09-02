@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "guiutils.h"
+#include "utils/trackdisplayer.h"
+#include "utils/clusterdisplayer.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -41,26 +43,23 @@ void MainWindow::openWizard()
 void MainWindow::displayTrack()
 {
     QString path = QFileDialog::getOpenFileName(
-                this, tr("Open Track File"), "D:/CST/MyProgram/TrajSys/output",
+                this, tr("Open Track File"), "../output",
                 tr("Track (*.trk)"));
     if (path.isEmpty()) return;
 
-//    QString windowName = "Track Displayer";
-//    cv::namedWindow(windowName.toStdString());
-
-//    TrackDisplayer trackDisplayer;
-//    trackDisplayer.display(windowName, path);
-
-//    cv::destroyWindow(windowName.toStdString());
+    TrackDisplayer trackDisplayer(path);
+    trackDisplayer.disp();
+    trackDisplayer.release();
 }
 
 void MainWindow::displayCluster()
 {
     QString path = QFileDialog::getOpenFileName(
-                this, tr("Open Clsuter File"), "D:/CST/MyProgram/TrajSys/output",
+                this, tr("Open Clsuter File"), "../output",
                 tr("Cluster (*.cls)"));
     if (path.isEmpty()) return;
 
-//    ClusterDisplayer clusterDisplayer(path);
-//    clusterDisplayer.display();
+    ClusterDisplayer clusterDisplayer(path);
+    clusterDisplayer.disp();
+    clusterDisplayer.release();
 }

@@ -17,6 +17,7 @@ void AppsPage::release()
     sourcesLabels = NULL;
     appsTypesComboBoxes = NULL;
     appsParamsLineEdits = NULL;
+    needDisplayCheckBoxes = NULL;
 }
 
 void AppsPage::initializePage()
@@ -36,6 +37,12 @@ void AppsPage::initializePage()
         sourcesLabels[i].setToolTip(file.absoluteFilePath());
     }
 
+    needDisplayCheckBoxes = new QCheckBox[nrSources];
+    for (int i = 0; i < nrSources; i ++) {
+        needDisplayCheckBoxes[i].setToolTip("Display");
+        needDisplayCheckBoxes[i].setChecked(true);
+    }
+
     appsTypesComboBoxes = new QComboBox[nrSources];
     for (int i = 0; i < nrSources; i ++) {
         for (int j = 0; j < NR_APPS; j ++)
@@ -45,13 +52,15 @@ void AppsPage::initializePage()
     appsParamsLineEdits = new QLineEdit[nrSources];
     for (int i = 0; i < nrSources; i ++) {
         appsParamsLineEdits[i].setText(APPS_DEFAULT_PARAMS[0]);
+        appsParamsLineEdits[i].setToolTip(tr("d,k,lambda"));
     }
 
     QGridLayout *subLayout = new QGridLayout;
     for (int i = 0; i < nrSources; i ++) {
         subLayout->addWidget(&sourcesLabels[i], i, 0);
-        subLayout->addWidget(&appsTypesComboBoxes[i], i, 1);
-        subLayout->addWidget(&appsParamsLineEdits[i], i, 2);
+        subLayout->addWidget(&needDisplayCheckBoxes[i], i, 1);
+        subLayout->addWidget(&appsTypesComboBoxes[i], i, 2);
+        subLayout->addWidget(&appsParamsLineEdits[i], i, 3);
     }
 
     QWidget *subWidget = new QWidget;
@@ -69,10 +78,12 @@ void AppsPage::initializePage()
 }
 
 void AppsPage::getApps(QStringList &appsTypes,
-                      QStringList &appsParams)
+                       QStringList &appsParams,
+                       QVector<bool> &needDisplay)
 {
     for (int i = 0; i < nrSources; i ++) {
         appsTypes.push_back(appsTypesComboBoxes[i].currentText());
         appsParams.push_back(appsParamsLineEdits[i].text());
+        needDisplay.push_back(needDisplayCheckBoxes[i].isChecked());
     }
 }

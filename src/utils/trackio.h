@@ -1,7 +1,6 @@
 #ifndef TRACKIO_H
 #define TRACKIO_H
 
-#include <QObject>
 #include <QString>
 
 #include "utils.h"
@@ -12,12 +11,14 @@ public:
     TrackIO();
 
     void setInput(const QString &filePath);
-    bool readInfo(QString &sourcePath, int &nrFeature);
+    bool readInfo(QString &sourcePath,
+                  int &nrFeature, int &fgThres, int &stThres);
     bool readFrame(TrackPoint *trackPoints);
     void closeInput();
 
     void setOutput(const QString &filePath);
-    void writeInfo(const QString &sourcePath, const int &nrFeature);
+    void writeInfo(const QString &sourcePath,
+                   const int &nrFeature, const int &fgThres, const int &stThres);
     void writeFrame(TrackPoint *trackPoints);
     void closeOutput();
     

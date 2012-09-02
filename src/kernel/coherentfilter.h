@@ -17,7 +17,7 @@ public:
     explicit CoherentFilter(const QString &params, const int &nrFeature,
                             QObject *parent = 0);
 
-    bool getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clusterPoints);
+    void getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clusterPoints);
 
     void release();
     

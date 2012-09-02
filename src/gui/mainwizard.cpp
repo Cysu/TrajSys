@@ -20,10 +20,12 @@ void MainWizard::accept()
     getSources(sources);
 
     QStringList trackersType, trackersParams;
-    getTrackers(trackersType, trackersParams);
+    QVector<bool> trackersNeedDisplay;
+    getTrackers(trackersType, trackersParams, trackersNeedDisplay);
 
     QStringList appsType, appsParams;
-    getApps(appsType, appsParams);
+    QVector<bool> appsNeedDisplay;
+    getApps(appsType, appsParams, appsNeedDisplay);
 
     QVector<TaskManager::Task> tasks;
     for (int i = 0; i < sources.size(); i ++) {
@@ -32,14 +34,16 @@ void MainWizard::accept()
             sources[i],
             trackersType[i],
             trackersParams[i],
+            trackersNeedDisplay[i],
             appsType[i],
-            appsParams[i]
+            appsParams[i],
+            appsNeedDisplay[i]
         };
         tasks.push_back(task);
     }
 
+    QDialog::accept();
+
     TaskManager taskManager(tasks);
     taskManager.handleTasks();
-
-    QDialog::accept();
 }

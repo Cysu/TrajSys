@@ -15,6 +15,8 @@ public:
     ~FrameIO();
     void release();
 
+    int getNrFrame();
+
     // Returns the frameIdx. Or -1 if no next frame.
     int readNextFrame(cv::Mat &frame);
     static bool writeFrame(const cv::Mat &frame, QString &filePath);

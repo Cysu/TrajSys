@@ -3,6 +3,8 @@
 #include "appmanager.h"
 #include "sourcemanager.h"
 
+#include <QProgressDialog>
+
 #include <opencv2/opencv.hpp>
 
 
@@ -17,16 +19,21 @@ void TaskManager::handleTasks()
     for (int i = 0; i < tasks.size(); i ++) {
         Task &task = tasks[i];
         QString ofPath = "../output/" + QFileInfo(task.sources).fileName();
-        QString trackerOfPath = (task.sources == "Camera") ?
+        QString trackerOfPath = (task.sources == "Camera" || task.trackerType == "LOAD") ?
                     "" : ofPath+"("+task.trackerParams+").trk";
         QString appOfPath = (task.sources == "Camera") ?
                     "" : ofPath+"("+task.appParams+").cls";
 
         SourceManager sourceManager(task.sources);
         TrackerManager trackerManager(task.trackerType, task.trackerParams,
-                                      task.sources, trackerOfPath);
+                                      task.sources, trackerOfPath, task.trackerNeedDisplay);
         AppManager appManager(task.appType, task.appParams, trackerManager.getNrFeature(),
-                              task.sources, appOfPath);
+                              task.sources, appOfPath, task.appNeedDisplay);
+
+        int pmax = sourceManager.getNrFrame();
+        if (pmax == -1) pmax = 100;
+        QProgressDialog progress("Processing task "+i, "Cancel", 0, pmax);
+        progress.setWindowModality(Qt::WindowModal);
 
         cv::Mat frame;
         TrackPoint *trackPoints = new TrackPoint[trackerManager.getNrFeature()];
@@ -41,8 +48,23 @@ void TaskManager::handleTasks()
             int frameIdx = sourceManager.getNextFrame(frame);
             if (frameIdx == -1) break;
 
-            trackerManager.getTrackPoints(frame, trackPoints);
+            if (task.trackerNeedDisplay || task.appNeedDisplay) {
+                int t = cv::waitKey(50);
+                if (t == 'r') appManager.clusterDisplayer->mode = 1;
+                if (t == 'a') appManager.clusterDisplayer->mode = 0;
+                if (t == 'i') appManager.clusterDisplayer->ignoreSmallCluster = true;
+                if (t == 'n') appManager.clusterDisplayer->ignoreSmallCluster = false;
+            }
 
+            if (progress.wasCanceled()) {
+                break;
+            }
+            if (sourceManager.getNrFrame() != -1)
+                progress.setValue(frameIdx+1);
+            else
+                progress.setValue(50);
+
+            trackerManager.getTrackPoints(frame, trackPoints);
             appManager.getResult(frame, trackPoints);
         }
 
@@ -52,45 +74,4 @@ void TaskManager::handleTasks()
         trackerManager.release();
         appManager.release();
     }
-
-            /*if (task.sources == "Camera") {
-
-                cv::VideoCapture videoCapture(0);
-                if (!videoCapture.isOpened()) return;
-
-                TrackerManager trackerManager(task.trackerType, task.trackerParams);
-                TrackDisplayer trackDisplayer;
-
-                AppManager appManager(task.appType, task.appParams);
-
-                QString windowName = "Cluster Displayer";
-                cv::Mat img, grayimg;
-                cv::namedWindow(windowName.toStdString());
-
-                for (int frameIdx = 0; ; frameIdx ++) {
-                    if (cv::waitKey(10) >= 0) break;
-
-                    videoCapture >> img;
-
-                    if (frameIdx < 30) continue;
-
-                    CvSize size = {320, 240};
-                    cv::resize(img, img, size);
-                    cv::cvtColor(img, grayimg, CV_BGR2GRAY);
-
-                    TrackSet trackSet;
-                    bool *mark;
-                    trackerManager.getFromImage(grayimg, &trackSet, mark);
-
-//                    trackDisplayer.display(windowName, trackSet, img);
-
-                    appManager.displayResult(windowName, trackSet, mark, img);
-
-                }
-
-                cv::destroyWindow(windowName.toStdString());
-                trackerManager.finish();
-            } else
-        }
-    }*/
 }

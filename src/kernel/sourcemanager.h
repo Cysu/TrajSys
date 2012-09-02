@@ -15,6 +15,8 @@ public:
     explicit SourceManager(const QString &source, QObject *parent = 0);
     void release();
 
+    int getNrFrame();
+
     int getNextFrame(cv::Mat &frame);
     
 private:

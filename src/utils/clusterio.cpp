@@ -29,12 +29,12 @@ bool ClusterIO::readFrame(ClusterPoint *clusterPoints)
 {
     for (int k = 0; k < nrFeature; k ++) {
         ClusterPoint clusterPoint;
-        fscanf(fin, "(%d,%d,%d,%d,%d)", &clusterPoint.flag,
+        if (fscanf(fin, "(%d,%d,%d,%d,%d)", &clusterPoint.flag,
                &clusterPoint.x, &clusterPoint.y,
-               &clusterPoint.rawLabel, &clusterPoint.ascLabel);
+               &clusterPoint.rawLabel, &clusterPoint.ascLabel) == EOF) return false;
         clusterPoints[k] = clusterPoint;
     }
-    fscanf(fin, "\n");
+    if (fscanf(fin, "\n") == EOF) return false;
     return true;
 }
 

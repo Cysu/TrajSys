@@ -37,11 +37,20 @@ void FrameIO::release()
     frameIdx = 0;
 }
 
+int FrameIO::getNrFrame()
+{
+    if (videoCapture != NULL) return -1;
+    if (imgFiles != NULL) return imgFiles->size();
+    return -1;
+}
+
 int FrameIO::readNextFrame(cv::Mat &frame)
 {
     if (videoCapture != NULL) {
         if (!videoCapture->isOpened()) return -1;
         (*videoCapture) >> frame;
+        CvSize size = {0, 0};
+        cv::resize(frame, frame, size, 0.5, 0.5);
         return frameIdx ++;
     } else if (imgFiles != NULL) {
         if (frameIdx >= imgFiles->size()) return -1;

@@ -15,11 +15,13 @@ public:
     void initializePage();
 
     void getApps(QStringList &appsTypes,
-                 QStringList &appsParams);
+                 QStringList &appsParams,
+                 QVector<bool> &needDisplay);
 
 private:
     int nrSources;
     QLabel *sourcesLabels;
+    QCheckBox *needDisplayCheckBoxes;
     QComboBox *appsTypesComboBoxes;
     QLineEdit *appsParamsLineEdits;
 

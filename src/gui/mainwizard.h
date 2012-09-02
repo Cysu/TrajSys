@@ -19,11 +19,11 @@ public:
     inline void getSources(QStringList &sources) {
         sourcesPage->getSources(sources);
     }
-    inline void getTrackers(QStringList &trackersTypes, QStringList &trackersParams) {
-        trackersPage->getTrackers(trackersTypes, trackersParams);
+    inline void getTrackers(QStringList &trackersTypes, QStringList &trackersParams, QVector<bool> &trackersNeedDisplay) {
+        trackersPage->getTrackers(trackersTypes, trackersParams, trackersNeedDisplay);
     }
-    inline void getApps(QStringList &appsTypes, QStringList &appsParams) {
-        appsPage->getApps(appsTypes, appsParams);
+    inline void getApps(QStringList &appsTypes, QStringList &appsParams, QVector<bool> &appsNeedDisplay) {
+        appsPage->getApps(appsTypes, appsParams, appsNeedDisplay);
     }
 
 private:
