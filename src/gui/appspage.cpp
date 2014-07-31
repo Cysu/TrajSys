@@ -46,12 +46,12 @@ void AppsPage::initializePage()
     appsTypesComboBoxes = new QComboBox[nrSources];
     for (int i = 0; i < nrSources; i ++) {
         for (int j = 0; j < NR_APPS; j ++)
-            appsTypesComboBoxes[i].addItem(APPS_TYPES[j]);
+            appsTypesComboBoxes[i].addItem(APPS_TYPES[j].c_str());
     }
 
     appsParamsLineEdits = new QLineEdit[nrSources];
     for (int i = 0; i < nrSources; i ++) {
-        appsParamsLineEdits[i].setText(APPS_DEFAULT_PARAMS[0]);
+        appsParamsLineEdits[i].setText(APPS_DEFAULT_PARAMS[0].c_str());
         appsParamsLineEdits[i].setToolTip(tr("d,k,lambda"));
     }
 

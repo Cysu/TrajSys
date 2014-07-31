@@ -24,11 +24,18 @@ void TaskManager::handleTasks()
         QString appOfPath = (task.sources == "Camera") ?
                     "" : ofPath+"("+task.appParams+").cls";
 
-        SourceManager sourceManager(task.sources);
-        TrackerManager trackerManager(task.trackerType, task.trackerParams,
-                                      task.sources, trackerOfPath, task.trackerNeedDisplay);
-        AppManager appManager(task.appType, task.appParams, trackerManager.getNrFeature(),
-                              task.sources, appOfPath, task.appNeedDisplay);
+        SourceManager sourceManager(task.sources.toStdString());
+        TrackerManager trackerManager(task.trackerType.toStdString(),
+                                      task.trackerParams.toStdString(),
+                                      task.sources.toStdString(),
+                                      trackerOfPath.toStdString(),
+                                      task.trackerNeedDisplay);
+        AppManager appManager(task.appType.toStdString(),
+                              task.appParams.toStdString(),
+                              trackerManager.getNrFeature(),
+                              task.sources.toStdString(),
+                              appOfPath.toStdString(),
+                              task.appNeedDisplay);
 
         int pmax = sourceManager.getNrFrame();
         if (pmax == -1) pmax = 100;

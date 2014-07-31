@@ -1,10 +1,14 @@
 #include "klttracker.h"
+#include <cstdlib>
 
 #define BUFTP(t, k) bufTrackPoints[(t)*nrFeature + k]
 
-KltTracker::KltTracker(const QString &params,
-                       QObject *parent) :
-    QObject(parent)
+using std::string;
+using std::vector;
+using cv::cvtColor;
+using cv::Mat;
+
+KltTracker::KltTracker(const string& params)
 {
     // Get parameters of KLT tracker.
     parseParams(params);
@@ -25,25 +29,25 @@ KltTracker::KltTracker(const QString &params,
 void KltTracker::release()
 {
     delete[] bufTrackPoints;
-    delete tc;
-    delete fl;
+    bufTrackPoints = NULL;
 
+    KLTFreeTrackingContext(tc);
+    KLTFreeFeatureList(fl);
     tc = NULL;
     fl = NULL;
-    bufTrackPoints = NULL;
 
     frameIdx = 0;
 }
 
-void KltTracker::recordBgFrame(const cv::Mat &frame)
+void KltTracker::recordBgFrame(const Mat& frame)
 {
     bgFrame = frame.clone();
 }
 
-void KltTracker::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
+void KltTracker::getTrackPoints(const Mat& frame, TrackPoint* trackPoints)
 {
     // First change to gray scale image.
-    cv::cvtColor(frame, cntFrame, CV_BGR2GRAY);
+    cvtColor(frame, cntFrame, CV_BGR2GRAY);
 
     int cntTid, prevTid;
     if (stThres > 0) {
@@ -65,8 +69,8 @@ void KltTracker::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
             trackPoint.flag = FLAG_NEW_TRACKPOINT;
 
             if (fgThres > 0) {
-                int v = (int)(cntFrame.at<quint8>(y, x));
-                int bgV = (int)(bgFrame.at<quint8>(y, x));
+                int v = (int)(cntFrame.at<unsigned char>(y, x));
+                int bgV = (int)(bgFrame.at<unsigned char>(y, x));
                 if (abs(v-bgV) >= fgThres)
                     trackPoint.flag |= FLAG_IS_FOREGROUND;
             }
@@ -115,8 +119,8 @@ void KltTracker::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
                 trackPoint.flag = FLAG_NEW_TRACKPOINT;
 
                 if (fgThres > 0) {
-                    int v = (int)(cntFrame.at<quint8>(y, x));
-                    int bgV = (int)(bgFrame.at<quint8>(y, x));
+                    int v = (int)(cntFrame.at<unsigned char>(y, x));
+                    int bgV = (int)(bgFrame.at<unsigned char>(y, x));
                     if (abs(v-bgV) >= fgThres)
                         trackPoint.flag |= FLAG_IS_FOREGROUND;
                 }
@@ -133,12 +137,12 @@ void KltTracker::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
     frameIdx ++;
 }
 
-void KltTracker::parseParams(const QString &params)
+void KltTracker::parseParams(const std::string &params)
 {
-    QStringList paramList = params.split(",");
-    nrFeature = paramList.at(0).toInt();
-    fgThres = paramList.at(1).toInt();
-    stThres = paramList.at(2).toInt();
+    vector<string> paramList = split(params, ',');
+    nrFeature = atoi(paramList[0].c_str());
+    fgThres = atoi(paramList[1].c_str());
+    stThres = atoi(paramList[2].c_str());
 }
 
 bool KltTracker::isStableTrack(int idx)

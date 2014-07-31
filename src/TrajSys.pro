@@ -9,14 +9,17 @@ QT       += core gui
 TARGET = TrajSys
 TEMPLATE = app
 
+QMAKE_CXXFLAGS += -std=c++11
+
 # MAC opencv dir
-#INCLUDEPATH += /usr/local/include
-#LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_video
+INCLUDEPATH += /opt/local/include
+LIBS += -L/opt/local/lib
+LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_video
 
 # Windows opencv dir
-INCLUDEPATH += F:/Software/opencv/mingw/install/include
-LIBS += -LF:/Software/opencv/mingw/install/lib
-LIBS += -lopencv_core242 -lopencv_highgui242 -lopencv_imgproc242 -lopencv_video242
+#INCLUDEPATH += F:/Software/opencv/mingw/install/include
+#LIBS += -LF:/Software/opencv/mingw/install/lib
+#LIBS += -lopencv_core242 -lopencv_highgui242 -lopencv_imgproc242 -lopencv_video242
 
 SOURCES += gui/main.cpp\
     gui/mainwindow.cpp \
@@ -44,7 +47,8 @@ SOURCES += gui/main.cpp\
     utils/frameio.cpp \
     kernel/sourcemanager.cpp \
     utils/trackdisplayer.cpp \
-    utils/clusterdisplayer.cpp
+    utils/clusterdisplayer.cpp \
+    utils/utils.cpp
 
 HEADERS  += gui/mainwindow.h \
     utils/klt/pyramid.h \

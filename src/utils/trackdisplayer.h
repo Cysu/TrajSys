@@ -1,37 +1,32 @@
 #ifndef TRACKDISPLAYER_H
 #define TRACKDISPLAYER_H
 
-#include <QObject>
-#include <QString>
-
 #include "utils.h"
 #include "frameio.h"
 #include "trackio.h"
-#include "opencv2/opencv.hpp"
+#include <opencv2/opencv.hpp>
 
-class TrackDisplayer : public QObject
+class TrackDisplayer
 {
-    Q_OBJECT
-
 public:
-    explicit TrackDisplayer(const int &nrFeature, const int &trackLength, QObject *parent = 0);
-    explicit TrackDisplayer(const QString &trkFile, QObject *parent = 0);
+    TrackDisplayer(int nrFeature, int trackLength);
+    explicit TrackDisplayer(const std::string& trkFile);
 
     void release();
 
-    void dispFrame(const cv::Mat &frame, TrackPoint *trackPoints);
+    void dispFrame(const cv::Mat& frame, TrackPoint* trackPoints);
     void disp();
     
 private:
-    FrameIO *frameIO;
-    TrackIO *trackIO;
+    FrameIO* frameIO;
+    TrackIO* trackIO;
 
-    QString window;
+    std::string window;
     int trackLength;
 
     int nrFeature;
     int frameIdx;
-    TrackPoint *bufTrackPoints;
+    TrackPoint* bufTrackPoints;
 };
 
 #endif // TRACKDISPLAYER_H

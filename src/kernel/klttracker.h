@@ -1,24 +1,18 @@
 #ifndef KLTTRACKER_H
 #define KLTTRACKER_H
 
-#include <QObject>
-#include <QString>
-#include <QStringList>
-
-#include <opencv2/opencv.hpp>
-
 #include "utils/utils.h"
 #include "utils/klt/klt.h"
+#include <opencv2/opencv.hpp>
 
-class KltTracker : public QObject
+
+class KltTracker
 {
-    Q_OBJECT
-
 public:
-    explicit KltTracker(const QString &params, QObject *parent = 0);
+    explicit KltTracker(const std::string& params);
 
-    void recordBgFrame(const cv::Mat &frame);
-    void getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints);
+    void recordBgFrame(const cv::Mat& frame);
+    void getTrackPoints(const cv::Mat& frame, TrackPoint* trackPoints);
 
     void release();
 
@@ -32,9 +26,9 @@ private:
 
     int frameIdx;
 
-    TrackPoint *bufTrackPoints;
+    TrackPoint* bufTrackPoints;
 
-    void parseParams(const QString &params);
+    void parseParams(const std::string& params);
     bool isStableTrack(int idx);
 };
 

@@ -1,12 +1,19 @@
 #include "clusterdisplayer.h"
 #include "gui/guiutils.h"
 
-ClusterDisplayer::ClusterDisplayer(const int &nrFeature, QObject *parent) :
-    QObject(parent),
-    nrFeature(nrFeature),
-    window("Cluster Displayer")
+using std::string;
+using cv::Mat;
+using cv::Point;
+using cv::imshow;
+using cv::waitKey;
+using cv::namedWindow;
+using cv::destroyWindow;
+
+ClusterDisplayer::ClusterDisplayer(int nrFeature)
+    : nrFeature(nrFeature),
+      window("Cluster Displayer")
 {
-    cv::namedWindow(window.toStdString());
+    namedWindow(window);
     mode = 0;
     ignoreSmallCluster = false;
 
@@ -16,21 +23,20 @@ ClusterDisplayer::ClusterDisplayer(const int &nrFeature, QObject *parent) :
     tot = new int[nrFeature];
 }
 
-ClusterDisplayer::ClusterDisplayer(const QString &clsFile, QObject *parent) :
-    QObject(parent),
-    window("Cluster Displayer")
+ClusterDisplayer::ClusterDisplayer(const string& clsFile)
+    : window("Cluster Displayer")
 {
     clusterIO = new ClusterIO;
     clusterIO->setInput(clsFile);
 
-    QString srcPath;
+    string srcPath;
     clusterIO->readInfo(srcPath, nrFeature);
 
-    frameIO = new FrameIO(srcPath);
-    cv::Mat bgFrame;
+    frameIO = new FrameIO(srcPath.c_str());
+    Mat bgFrame;
     frameIO->readNextFrame(bgFrame);
 
-    cv::namedWindow(window.toStdString());
+    namedWindow(window);
     mode = 0;
     ignoreSmallCluster = false;
 
@@ -39,7 +45,7 @@ ClusterDisplayer::ClusterDisplayer(const QString &clsFile, QObject *parent) :
 
 void ClusterDisplayer::release()
 {
-    cv::destroyWindow(window.toStdString());
+    destroyWindow(window);
 
     delete[] tot;
 
@@ -57,11 +63,11 @@ void ClusterDisplayer::release()
 
 void ClusterDisplayer::disp()
 {
-    cv::Mat frame;
-    ClusterPoint *clusterPoints = new ClusterPoint[nrFeature];
+    Mat frame;
+    ClusterPoint* clusterPoints = new ClusterPoint[nrFeature];
 
     while (true) {
-        int t = cv::waitKey(50);
+        int t = waitKey(50);
         if (t == 'q') break;
         else if (t == 'r') mode = 1;
         else if (t == 'a') mode = 0;
@@ -77,9 +83,9 @@ void ClusterDisplayer::disp()
     delete[] clusterPoints;
 }
 
-void ClusterDisplayer::dispFrame(const cv::Mat &frame, ClusterPoint *clusterPoints)
+void ClusterDisplayer::dispFrame(const Mat& frame, ClusterPoint* clusterPoints)
 {
-    cv::Mat img = frame.clone();
+    Mat img = frame.clone();
 
     if (ignoreSmallCluster) {
         memset(tot, 0, nrFeature*sizeof(int));
@@ -96,7 +102,7 @@ void ClusterDisplayer::dispFrame(const cv::Mat &frame, ClusterPoint *clusterPoin
             if (tot[clusterPoints[i].rawLabel] < 4) continue;
         }
 
-        cv::Point p(clusterPoints[i].x, clusterPoints[i].y);
+        Point p(clusterPoints[i].x, clusterPoints[i].y);
         if (mode == 0) {
             if (clusterPoints[i].ascLabel == -1) continue;
             cv::circle(img, p, 3, EXAMPLE_COLOR[clusterPoints[i].ascLabel%6], -1);
@@ -105,6 +111,5 @@ void ClusterDisplayer::dispFrame(const cv::Mat &frame, ClusterPoint *clusterPoin
             cv::circle(img, p, 3, EXAMPLE_COLOR[clusterPoints[i].rawLabel%6], -1);
         }
     }
-    cv::imshow(window.toStdString(), img);
-
+    imshow(window, img);
 }

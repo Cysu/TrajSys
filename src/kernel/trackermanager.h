@@ -1,45 +1,37 @@
 #ifndef TRACKERMANAGER_H
 #define TRACKERMANAGER_H
 
-#include <QObject>
-#include <QString>
-#include <QStringList>
-#include <QFileInfoList>
-
-#include <opencv2/opencv.hpp>
-
 #include "klttracker.h"
 #include "utils/utils.h"
 #include "utils/trackio.h"
 #include "utils/trackdisplayer.h"
+#include <opencv2/opencv.hpp>
 
-class TrackerManager : public QObject
+
+class TrackerManager
 {
-    Q_OBJECT
-
 public:
-    explicit TrackerManager(const QString &type, const QString &params,
-                            const QString &srcPath, const QString &ofPath,
-                            const bool &needDisplay,
-                            QObject *parent = 0);
+    TrackerManager(const std::string& type, const std::string& params,
+                   const std::string& srcPath, const std::string& ofPath,
+                   bool needDisplay);
 
-    void recordBgFrame(const cv::Mat &frame);
-    void getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints);
+    void recordBgFrame(const cv::Mat& frame);
+    void getTrackPoints(const cv::Mat& frame, TrackPoint* trackPoints);
 
     int getNrFeature();
     int getFgThres();
 
     void release();
 
-    QString srcPath;
+    std::string srcPath;
 
 private:
-    TrackIO *trackIO;
-    TrackDisplayer *trackDisplayer;
+    TrackIO* trackIO;
+    TrackDisplayer* trackDisplayer;
 
     int nrFeature, fgThres, stThres;
 
-    KltTracker *kltTracker;
+    KltTracker* kltTracker;
 };
 
 #endif // TRACKERMANAGER_H

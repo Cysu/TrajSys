@@ -1,10 +1,11 @@
 #include "trackermanager.h"
 
-TrackerManager::TrackerManager(const QString &type, const QString &params,
-                               const QString &srcPath, const QString &ofPath,
-                               const bool &needDisplay,
-                               QObject *parent) :
-    QObject(parent)
+using std::string;
+using cv::Mat;
+
+TrackerManager::TrackerManager(const string& type, const string& params,
+                               const string& srcPath, const string& ofPath,
+                               bool needDisplay)
 {
     kltTracker = NULL;
     if (type == "KLT") {
@@ -15,8 +16,8 @@ TrackerManager::TrackerManager(const QString &type, const QString &params,
     if (ofPath != "") {
         trackIO = new TrackIO;
         trackIO->setOutput(ofPath);
-        trackIO->writeInfo(srcPath,
-                           kltTracker->nrFeature, kltTracker->fgThres, kltTracker->stThres);
+        trackIO->writeInfo(srcPath, kltTracker->nrFeature, kltTracker->fgThres,
+                           kltTracker->stThres);
     } else if (type == "LOAD" && params != "") {
         trackIO = new TrackIO;
         trackIO->setInput(params);
@@ -37,14 +38,14 @@ TrackerManager::TrackerManager(const QString &type, const QString &params,
 
 }
 
-void TrackerManager::recordBgFrame(const cv::Mat &frame)
+void TrackerManager::recordBgFrame(const Mat& frame)
 {
     if (kltTracker != NULL) {
         kltTracker->recordBgFrame(frame);
     }
 }
 
-void TrackerManager::getTrackPoints(const cv::Mat &frame, TrackPoint *trackPoints)
+void TrackerManager::getTrackPoints(const Mat& frame, TrackPoint *trackPoints)
 {
     if (kltTracker != NULL) {
         kltTracker->getTrackPoints(frame, trackPoints);

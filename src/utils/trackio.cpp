@@ -1,6 +1,8 @@
+#include "trackio.h"
 #include <cstdio>
 
-#include "trackio.h"
+using std::string;
+
 
 TrackIO::TrackIO()
 {
@@ -9,15 +11,15 @@ TrackIO::TrackIO()
     nrFeature = 0;
 }
 
-void TrackIO::setOutput(const QString &filePath)
+void TrackIO::setOutput(const string& filePath)
 {
-    fout = fopen(filePath.toStdString().c_str(), "w");
+    fout = fopen(filePath.c_str(), "w");
 }
 
-void TrackIO::writeInfo(const QString &sourcePath,
-                        const int &nrFeature, const int &fgThres, const int &stThres)
+void TrackIO::writeInfo(const string& sourcePath,
+                        int nrFeature, int fgThres, int stThres)
 {
-    fprintf(fout, "%s\n", sourcePath.toStdString().c_str());
+    fprintf(fout, "%s\n", sourcePath.c_str());
     fprintf(fout, "%d %d %d\n", nrFeature, fgThres, stThres);
     this->nrFeature = nrFeature;
 }
@@ -35,17 +37,17 @@ void TrackIO::closeOutput()
     if (fout != NULL) fclose(fout);
 }
 
-void TrackIO::setInput(const QString &filePath)
+void TrackIO::setInput(const string& filePath)
 {
-    fin = fopen(filePath.toStdString().c_str(), "r");
+    fin = fopen(filePath.c_str(), "r");
 }
 
-bool TrackIO::readInfo(QString &sourcePath,
-                       int &nrFeature, int &fgThres, int &stThres)
+bool TrackIO::readInfo(string& sourcePath,
+                       int& nrFeature, int& fgThres, int& stThres)
 {
     char buf[1000];
     if (fscanf(fin, "%s\n", buf) == EOF) return false;
-    sourcePath = QString(buf);
+    sourcePath = buf;
     if (fscanf(fin, "%d %d %d\n", &nrFeature, &fgThres, &stThres) == EOF) return false;
     this->nrFeature = nrFeature;
     return true;

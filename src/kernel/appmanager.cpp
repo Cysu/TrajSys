@@ -1,11 +1,11 @@
 #include "appmanager.h"
 
-AppManager::AppManager(const QString &type, const QString &params,
-                       const int &nrFeature,
-                       const QString &srcPath, const QString &ofPath,
-                       const bool &needDisplay,
-                       QObject *parent) :
-    QObject(parent)
+using std::string;
+using cv::Mat;
+
+AppManager::AppManager(const string& type, const string& params,
+                       int nrFeature, const string& srcPath,
+                       const string& ofPath, bool needDisplay)
 {
     coherentFilter = NULL;
     clusterPoints = NULL;
@@ -52,7 +52,7 @@ void AppManager::release()
     }
 }
 
-void AppManager::getResult(const cv::Mat &frame, TrackPoint *trackPoints)
+void AppManager::getResult(const Mat& frame, TrackPoint* trackPoints)
 {
     if (coherentFilter != NULL) {
         coherentFilter->getClusterPoints(trackPoints, clusterPoints);

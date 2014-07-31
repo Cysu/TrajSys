@@ -1,26 +1,22 @@
 #ifndef SOURCEMANAGER_H
 #define SOURCEMANAGER_H
 
-#include <QObject>
-#include <QString>
-
 #include "utils/frameio.h"
-#include "opencv2/opencv.hpp"
+#include <string>
+#include <opencv2/opencv.hpp>
 
-class SourceManager : public QObject
+class SourceManager
 {
-    Q_OBJECT
-
 public:
-    explicit SourceManager(const QString &source, QObject *parent = 0);
+    explicit SourceManager(const std::string& source);
     void release();
 
     int getNrFrame();
 
-    int getNextFrame(cv::Mat &frame);
+    int getNextFrame(cv::Mat& frame);
     
 private:
-    FrameIO *frameIO;
+    FrameIO* frameIO;
 };
 
 #endif // SOURCEMANAGER_H

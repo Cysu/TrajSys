@@ -1,23 +1,15 @@
 #ifndef COHERENTFILTER_H
 #define COHERENTFILTER_H
 
-#include <QObject>
-#include <QString>
-#include <QStringList>
-
+#include "utils/utils.h"
 #include <opencv2/opencv.hpp>
 
-#include "utils/utils.h"
-
-class CoherentFilter : public QObject
+class CoherentFilter
 {
-    Q_OBJECT
-
 public:
-    explicit CoherentFilter(const QString &params, const int &nrFeature,
-                            QObject *parent = 0);
+    CoherentFilter(const std::string& params, int nrFeature);
 
-    void getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clusterPoints);
+    void getClusterPoints(TrackPoint* trackPoints, ClusterPoint* clusterPoints);
 
     void release();
     
@@ -28,22 +20,22 @@ private:
 
     int frameIdx;
 
-    TrackPoint *bufTrackPoints;
-    ClusterPoint *bufClusterPoints;
+    TrackPoint* bufTrackPoints;
+    ClusterPoint* bufClusterPoints;
 
-    int *knn;
-    int *dist;
-    int *idx;
-    int *father;
-    int *vote;
-    bool *conn;
-    int *length;
-    int *tot;
+    int* knn;
+    int* dist;
+    int* idx;
+    int* father;
+    int* vote;
+    bool* conn;
+    int* length;
+    int* tot;
 
-    void parseParams(const QString &params);
-    void knnSort(int *dist, int *idx, int l, int r);
-    void unionJoin(int *father, int i, int j);
-    int unionGetRoot(int *father, int i);
+    void parseParams(const std::string& params);
+    void knnSort(int* dist, int* idx, int l, int r);
+    void unionJoin(int* father, int i, int j);
+    int unionGetRoot(int* father, int i);
 };
 
 #endif // COHERENTFILTER_H

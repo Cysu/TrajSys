@@ -1,6 +1,7 @@
 #include "clusterio.h"
-
 #include <cstdio>
+
+using std::string;
 
 ClusterIO::ClusterIO()
 {
@@ -9,23 +10,23 @@ ClusterIO::ClusterIO()
     nrFeature = 0;
 }
 
-void ClusterIO::setInput(const QString &filePath)
+void ClusterIO::setInput(const string& filePath)
 {
-    fin = fopen(filePath.toStdString().c_str(), "r");
+    fin = fopen(filePath.c_str(), "r");
 }
 
-bool ClusterIO::readInfo(QString &sourcePath, int &nrFeature)
+bool ClusterIO::readInfo(string& sourcePath, int& nrFeature)
 {
     char buf[1000];
     if (fscanf(fin, "%s\n", buf) == EOF) return false;
-    sourcePath = QString(buf);
+    sourcePath = buf;
 
     if (fscanf(fin, "%d\n", &nrFeature) == EOF) return false;
     this->nrFeature = nrFeature;
     return true;
 }
 
-bool ClusterIO::readFrame(ClusterPoint *clusterPoints)
+bool ClusterIO::readFrame(ClusterPoint* clusterPoints)
 {
     for (int k = 0; k < nrFeature; k ++) {
         ClusterPoint clusterPoint;
@@ -43,19 +44,19 @@ void ClusterIO::closeInput()
     if (fin != NULL) fclose(fin);
 }
 
-void ClusterIO::setOutput(const QString &filePath)
+void ClusterIO::setOutput(const string& filePath)
 {
-    fout = fopen(filePath.toStdString().c_str(), "w");
+    fout = fopen(filePath.c_str(), "w");
 }
 
-void ClusterIO::writeInfo(const QString &sourcePath, const int &nrFeature)
+void ClusterIO::writeInfo(const string& sourcePath, int nrFeature)
 {
-    fprintf(fout, "%s\n", sourcePath.toStdString().c_str());
+    fprintf(fout, "%s\n", sourcePath.c_str());
     fprintf(fout, "%d\n", nrFeature);
     this->nrFeature = nrFeature;
 }
 
-void ClusterIO::writeFrame(ClusterPoint *clusterPoints)
+void ClusterIO::writeFrame(ClusterPoint* clusterPoints)
 {
     if (clusterPoints != NULL) {
         for (int k = 0; k < nrFeature; k ++)

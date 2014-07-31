@@ -46,12 +46,12 @@ void TrackersPage::initializePage()
     trackersTypesComboBoxes = new QComboBox[nrSources];
     for (int i = 0; i < nrSources; i ++) {
         for (int j = 0; j < NR_TRACKERS; j ++)
-            trackersTypesComboBoxes[i].addItem(TRACKERS_TYPES[j]);
+            trackersTypesComboBoxes[i].addItem(TRACKERS_TYPES[j].c_str());
     }
 
     trackersParamsLineEdits = new QLineEdit[nrSources];
     for (int i = 0; i < nrSources; i ++) {
-        trackersParamsLineEdits[i].setText(TRACKERS_DEFAULT_PARAMS[0]);
+        trackersParamsLineEdits[i].setText(TRACKERS_DEFAULT_PARAMS[0].c_str());
         trackersParamsLineEdits[i].setToolTip(tr("FeatureNum,ForegroundThres,StableTimeThres"));
     }
 

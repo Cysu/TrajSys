@@ -1,9 +1,11 @@
 #include "sourcemanager.h"
 
-SourceManager::SourceManager(const QString &source, QObject *parent) :
-    QObject(parent)
+using std::string;
+using cv::Mat;
+
+SourceManager::SourceManager(const string& source)
 {
-    frameIO = new FrameIO(source);
+    frameIO = new FrameIO(source.c_str());
 }
 
 void SourceManager::release()
@@ -11,7 +13,7 @@ void SourceManager::release()
     delete frameIO;
 }
 
-int SourceManager::getNextFrame(cv::Mat &frame)
+int SourceManager::getNextFrame(Mat& frame)
 {
     return frameIO->readNextFrame(frame);
 }

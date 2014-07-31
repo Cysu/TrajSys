@@ -1,24 +1,34 @@
 #include "frameio.h"
+#include <QFileInfoList>
+#include <QFileInfo>
+#include <QDir>
 
-FrameIO::FrameIO(const QString &source)
+using std::string;
+using std::vector;
+using cv::Mat;
+using cv::resize;
+using cv::imread;
+using cv::imwrite;
+using cv::VideoCapture;
+
+FrameIO::FrameIO(const string& source)
 {
     videoCapture = NULL;
-    imgFiles = NULL;
     frameIdx = 0;
 
     if (source == "Camera") {
-        videoCapture = new cv::VideoCapture(0);
+        videoCapture = new VideoCapture(0);
     } else {
-        QFileInfo src(source);
+        QFileInfo src(source.c_str());
         if (src.isDir()) {
-            QDir dir(source);
+            QDir dir(source.c_str());
             QStringList imgFilters;
             imgFilters << "*.bmp" << "*.jpg"<< "*.tiff" << "*.jpeg" << "*.png";
             dir.setNameFilters(imgFilters);
-            imgFiles = new QFileInfoList;
-            *imgFiles = dir.entryInfoList();
-        } else {
-
+            QFileInfoList list(dir.entryInfoList());
+            for (int i = 0; i < list.size(); ++i) {
+                imgFiles.push_back(list[i].absoluteFilePath().toStdString());
+            }
         }
     }
 }
@@ -31,36 +41,35 @@ FrameIO::~FrameIO()
 void FrameIO::release()
 {
     delete videoCapture;
-    delete imgFiles;
     videoCapture = NULL;
-    imgFiles = NULL;
+    imgFiles.clear();
     frameIdx = 0;
 }
 
 int FrameIO::getNrFrame()
 {
     if (videoCapture != NULL) return -1;
-    if (imgFiles != NULL) return imgFiles->size();
+    return imgFiles.size();
     return -1;
 }
 
-int FrameIO::readNextFrame(cv::Mat &frame)
+int FrameIO::readNextFrame(Mat& frame)
 {
     if (videoCapture != NULL) {
         if (!videoCapture->isOpened()) return -1;
         (*videoCapture) >> frame;
         CvSize size = {0, 0};
-        cv::resize(frame, frame, size, 0.5, 0.5);
+        resize(frame, frame, size, 0.5, 0.5);
         return frameIdx ++;
-    } else if (imgFiles != NULL) {
-        if (frameIdx >= imgFiles->size()) return -1;
-        frame = cv::imread(imgFiles->at(frameIdx).filePath().toStdString());
+    } else if (!imgFiles.empty()) {
+        if (frameIdx >= imgFiles.size()) return -1;
+        frame = imread(imgFiles[frameIdx]);
         return frameIdx ++;
     }
     return -1;
 }
 
-bool FrameIO::writeFrame(const cv::Mat &frame, QString &filePath)
+bool FrameIO::writeFrame(const Mat& frame, string& filePath)
 {
-    return cv::imwrite(filePath.toStdString(), frame);
+    return imwrite(filePath, frame);
 }

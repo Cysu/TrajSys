@@ -47,7 +47,7 @@ void MainWindow::displayTrack()
                 tr("Track (*.trk)"));
     if (path.isEmpty()) return;
 
-    TrackDisplayer trackDisplayer(path);
+    TrackDisplayer trackDisplayer(path.toStdString());
     trackDisplayer.disp();
     trackDisplayer.release();
 }
@@ -59,7 +59,7 @@ void MainWindow::displayCluster()
                 tr("Cluster (*.cls)"));
     if (path.isEmpty()) return;
 
-    ClusterDisplayer clusterDisplayer(path);
+    ClusterDisplayer clusterDisplayer(path.toStdString());
     clusterDisplayer.disp();
     clusterDisplayer.release();
 }

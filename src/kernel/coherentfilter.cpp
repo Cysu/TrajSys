@@ -1,18 +1,21 @@
 #include "coherentfilter.h"
 
-#include <QSet>
+#include <set>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 
 #define KNN(t, i, k) knn[(t)*nrFeature*nrNeighbor + (i)*nrNeighbor + (k)]
 #define BUFTP(t, i) bufTrackPoints[(t)*nrFeature + i]
 #define VOTE(r, l) vote[(r)*nrFeature + (l)]
 #define CONN(i, j) conn[(i)*nrFeature + (j)]
 
-CoherentFilter::CoherentFilter(const QString &params, const int &nrFeature,
-                               QObject *parent) :
-    QObject(parent),
-    nrFeature(nrFeature)
+using std::string;
+using std::vector;
+using std::set;
+
+CoherentFilter::CoherentFilter(const string& params, int nrFeature)
+    : nrFeature(nrFeature)
 {
     parseParams(params);
 
@@ -60,15 +63,16 @@ void CoherentFilter::release()
     frameIdx = 0;
 }
 
-void CoherentFilter::parseParams(const QString &params)
+void CoherentFilter::parseParams(const string& params)
 {
-    QStringList paramList = params.split(",");
-    period = paramList.at(0).toInt();
-    nrNeighbor = paramList.at(1).toInt();
-    vThres = paramList.at(2).toDouble();
+    vector<string> paramList = split(params, ',');
+    period = atoi(paramList[0].c_str());
+    nrNeighbor = atoi(paramList[1].c_str());
+    vThres = atoi(paramList[2].c_str());
 }
 
-void CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clusterPoints)
+void CoherentFilter::getClusterPoints(TrackPoint* trackPoints,
+                                      ClusterPoint* clusterPoints)
 {
     int cntTid = frameIdx % (period+1);
 
@@ -193,7 +197,7 @@ void CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clu
 
 
     // Association.
-    QSet<int> labels;
+    set<int> labels;
     for (int i = 0; i < nrFeature; i ++) {
         if (length[i] <= period+1) continue;
         if (!(trackPoints[i].flag & FLAG_IS_FOREGROUND)) continue;
@@ -209,7 +213,7 @@ void CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clu
         labels.insert(validLabel);
     }
 
-    QSet<int> roots;
+    set<int> roots;
     memset(vote, 0, nrFeature*nrFeature*sizeof(int));
     memset(tot, 0, nrFeature*sizeof(int));
     for (int i = 0; i < nrFeature; i ++) {
@@ -221,7 +225,8 @@ void CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clu
         VOTE(r, clusterPoints[i].ascLabel) ++;
     }
 
-    foreach (int r, roots) {
+    for (set<int>::const_iterator it = roots.begin(); it != roots.end(); ++it) {
+        int r = (*it);
         int maxVote = 0, maxLabel = -1;
         for (int i = 0; i < nrFeature; i ++) {
             if (length[i] < period+1) continue;
@@ -249,7 +254,7 @@ void CoherentFilter::getClusterPoints(TrackPoint *trackPoints, ClusterPoint *clu
     frameIdx ++;
 }
 
-void CoherentFilter::knnSort(int *dist, int *idx, int l, int r)
+void CoherentFilter::knnSort(int* dist, int* idx, int l, int r)
 {
     int i = l, j = r;
     int x = dist[(i+j)>>1];
@@ -267,13 +272,13 @@ void CoherentFilter::knnSort(int *dist, int *idx, int l, int r)
     if (i < r) knnSort(dist, idx, i, r);
 }
 
-void CoherentFilter::unionJoin(int *father, int i, int j) {
+void CoherentFilter::unionJoin(int* father, int i, int j) {
     int ri = unionGetRoot(father, i);
     int rj = unionGetRoot(father, j);
     father[ri] = rj;
 }
 
-int CoherentFilter::unionGetRoot(int *father, int i) {
+int CoherentFilter::unionGetRoot(int* father, int i) {
     if (father[i] == i) return i;
     father[i] = unionGetRoot(father, father[i]);
     return father[i];
